@@ -17,7 +17,10 @@ apply from: '../build.dependencies.gradle'
 
 android {
     namespace = 'org.firstinspires.ftc.teamcode'
-
+    //next 2 lines added for Panels
+    compileSdk 35
+    defaultConfig {        minSdk 24    }
+    //end two lines added
     packagingOptions {
         jniLibs.useLegacyPackaging true
     }
@@ -25,4 +28,5 @@ android {
 
 dependencies {
     implementation project(':FtcRobotController')
+    implementation "com.bylazar:fullpanels:1.0.4"
 }
