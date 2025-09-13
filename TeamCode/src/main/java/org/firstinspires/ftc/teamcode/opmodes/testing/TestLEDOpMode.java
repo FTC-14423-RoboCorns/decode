@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.IntoTheDeep.SubSystems.OurQwiicLEDStick;
+import org.firstinspires.ftc.teamcode.decode.SubSystems.OurQwiicLEDStick;
 
 @TeleOp()
 // @Disabled

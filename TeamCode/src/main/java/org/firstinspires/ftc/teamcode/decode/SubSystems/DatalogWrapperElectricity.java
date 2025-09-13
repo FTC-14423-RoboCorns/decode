@@ -21,7 +21,7 @@ Credit to @Windwoes (https://github.com/Windwoes).
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.VoltageUnit;
-import org.firstinspires.ftc.teamcode.IntoTheDeep.IntoTheDeepRobot;
+import org.firstinspires.ftc.teamcode.decode.IntoTheDeepRobot;
 
 
 public class DatalogWrapperElectricity

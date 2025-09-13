@@ -7,11 +7,11 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.teamcode.IntoTheDeep.CombinedLocalizer;
-import org.firstinspires.ftc.teamcode.IntoTheDeep.IntoTheDeepRobot;
-import org.firstinspires.ftc.teamcode.IntoTheDeep.SubSystems.Data;
-import org.firstinspires.ftc.teamcode.IntoTheDeep.SubSystems.Intake;
-import org.firstinspires.ftc.teamcode.IntoTheDeep.SubSystems.Lift;
+import org.firstinspires.ftc.teamcode.decode.CombinedLocalizer;
+import org.firstinspires.ftc.teamcode.decode.IntoTheDeepRobot;
+import org.firstinspires.ftc.teamcode.decode.SubSystems.Data;
+import org.firstinspires.ftc.teamcode.decode.SubSystems.Intake;
+import org.firstinspires.ftc.teamcode.decode.SubSystems.Lift;
 import org.firstinspires.ftc.teamcode.util.Vector2D;
 
 import java.util.HashMap;
