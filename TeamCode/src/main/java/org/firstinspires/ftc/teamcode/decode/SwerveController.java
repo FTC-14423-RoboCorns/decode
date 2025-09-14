@@ -11,7 +11,7 @@ public class SwerveController {
     public SwervePod frontRight;
     public SwervePod backLeft;
     public SwervePod backRight;
-    private IntoTheDeepRobot robot;
+    private DecodeRobot robot;
     public boolean isAligned = false;
     public static double LENGTH = 11.9/2;//10
     public static double WIDTH = 12.1/2;//9.875
@@ -22,7 +22,7 @@ public class SwerveController {
     private SwervePod[] pods;
     public CombinedLocalizer combinedLocalizer;
     double[] wheelPowers = new double[4];
-    public SwerveController(double xPos, double yPos, IntoTheDeepRobot robot){
+    public SwerveController(double xPos, double yPos, DecodeRobot robot){
         this.robot=robot;
         localizer = new SwerveLocalizer(xPos, yPos,robot);
         combinedLocalizer=new CombinedLocalizer(robot);

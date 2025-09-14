@@ -19,7 +19,7 @@ Credit to @Windwoes (https://github.com/Windwoes).
 
 
 
-import org.firstinspires.ftc.teamcode.decode.IntoTheDeepRobot;
+import org.firstinspires.ftc.teamcode.decode.DecodeRobot;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -29,9 +29,9 @@ import java.util.Locale;
 public class DatalogWrapper
 {
     Datalog datalog;
-       IntoTheDeepRobot robot;
+       DecodeRobot robot;
 
-    public DatalogWrapper(IntoTheDeepRobot robot){
+    public DatalogWrapper(DecodeRobot robot){
         this.robot =robot;
         String timestamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.US).format(new Date());
         datalog = new Datalog("datalog" + timestamp);

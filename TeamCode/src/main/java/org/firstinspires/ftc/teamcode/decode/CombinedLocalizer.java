@@ -21,7 +21,7 @@ public class CombinedLocalizer {
     private Vector2D aprilTagVector= new Vector2D(0,0);
     private Vector2D ultrasonicVector= new Vector2D(0,0);
 
-    private IntoTheDeepRobot robot;
+    private DecodeRobot robot;
   // private SwerveDrivePoseEstimator swerveDrivePoseEstimator;
   public enum PoseMode {
       SPARK,
@@ -33,7 +33,7 @@ public class CombinedLocalizer {
   }
   public PoseMode poseMode =PoseMode.SPARK;
 
-    public CombinedLocalizer( IntoTheDeepRobot robot){
+    public CombinedLocalizer( DecodeRobot robot){
         this.robot=robot;
     }
 

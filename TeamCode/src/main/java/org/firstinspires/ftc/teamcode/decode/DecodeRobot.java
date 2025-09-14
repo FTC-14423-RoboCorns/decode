@@ -25,7 +25,7 @@ import org.firstinspires.ftc.teamcode.decode.SubSystems.UltrasonicLocalizer;
 
 import java.util.List;
 
-public class IntoTheDeepRobot {
+public class DecodeRobot {
    // public AutoSwervePathFollower controller;
     //public CurveBasedSwervePathFollower controller;
     public CombinedPathFollower controller;
@@ -65,7 +65,7 @@ public class IntoTheDeepRobot {
     private double angle;
     public Limelight3A limelight;
     public LLResult limelightResult;
-    public IntoTheDeepRobot(double xPos, double yPos, double angle){
+    public DecodeRobot(double xPos, double yPos, double angle){
 
 
 

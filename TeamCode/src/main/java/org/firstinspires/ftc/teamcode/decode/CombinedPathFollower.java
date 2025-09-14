@@ -27,7 +27,7 @@ public class CombinedPathFollower {
     private double currTime,currDist = 0;
     private double routeConstant = 0;
     double timeConstant,tRaw = 0.0;
-    private IntoTheDeepRobot robot;
+    private DecodeRobot robot;
     private boolean precise=false;
     private boolean loose=false;
     public boolean abort=false;
@@ -52,7 +52,7 @@ public class CombinedPathFollower {
     }
     private PathState pathState =PathState.CURVE;
 
-    public CombinedPathFollower(double xPos, double yPos, IntoTheDeepRobot robot){
+    public CombinedPathFollower(double xPos, double yPos, DecodeRobot robot){
         this.robot =robot;
         controller = new SwerveController(xPos, yPos,robot);
     }

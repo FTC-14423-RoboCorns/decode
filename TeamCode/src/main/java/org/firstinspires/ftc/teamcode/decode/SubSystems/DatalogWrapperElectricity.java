@@ -21,15 +21,15 @@ Credit to @Windwoes (https://github.com/Windwoes).
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.VoltageUnit;
-import org.firstinspires.ftc.teamcode.decode.IntoTheDeepRobot;
+import org.firstinspires.ftc.teamcode.decode.DecodeRobot;
 
 
 public class DatalogWrapperElectricity
 {
     Datalog datalog;
-       IntoTheDeepRobot robot;
+       DecodeRobot robot;
 
-    public DatalogWrapperElectricity(IntoTheDeepRobot robot){
+    public DatalogWrapperElectricity(DecodeRobot robot){
         this.robot =robot;
         datalog = new Datalog("datalog_03");
 

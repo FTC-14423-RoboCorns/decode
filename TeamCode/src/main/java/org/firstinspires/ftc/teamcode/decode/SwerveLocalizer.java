@@ -41,7 +41,7 @@ public class SwerveLocalizer {
     private double angle;
     private SparkfunOdo sparkODO;
     private SwervePod[] swervePods;
-    private IntoTheDeepRobot robot;
+    private DecodeRobot robot;
     private SwerveModuleState[] moduleStates=new SwerveModuleState[4];
     public Pose2d m_pose;
 double dx, dy,dtheta;
@@ -49,7 +49,7 @@ double dx, dy,dtheta;
     private SwerveDriveKinematics m_kinematics;
     private SwerveDriveOdometry m_odometry;
   // private SwerveDrivePoseEstimator swerveDrivePoseEstimator;
-    public SwerveLocalizer(double xPos, double yPos, IntoTheDeepRobot robot){
+    public SwerveLocalizer(double xPos, double yPos, DecodeRobot robot){
         this.robot=robot;
         this.xPos = xPos;
         this.newX=xPos;

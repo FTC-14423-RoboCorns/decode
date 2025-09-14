@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.decode.CombinedLocalizer;
-import org.firstinspires.ftc.teamcode.decode.IntoTheDeepRobot;
+import org.firstinspires.ftc.teamcode.decode.DecodeRobot;
 import org.firstinspires.ftc.teamcode.decode.SubSystems.Data;
 import org.firstinspires.ftc.teamcode.decode.SubSystems.Intake;
 import org.firstinspires.ftc.teamcode.decode.SubSystems.Lift;
@@ -37,7 +37,7 @@ import java.util.Map;
 
 @TeleOp(group = "drive")
 public class MainTeleOp extends OpMode {
-    public IntoTheDeepRobot robot = new IntoTheDeepRobot(0,0, 0);
+    public DecodeRobot robot = new DecodeRobot(0,0, 0);
     public double angle = 0 ;
     public int level =1;
     //public boolean isIntakeOn = false;

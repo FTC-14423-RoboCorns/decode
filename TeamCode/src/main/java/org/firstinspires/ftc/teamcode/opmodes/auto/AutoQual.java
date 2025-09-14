@@ -10,36 +10,33 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.decode.CombinedLocalizer;
-import org.firstinspires.ftc.teamcode.decode.IntoTheDeepRobot;
+import org.firstinspires.ftc.teamcode.decode.DecodeRobot;
 import org.firstinspires.ftc.teamcode.decode.SubSystems.Data;
 import org.firstinspires.ftc.teamcode.decode.SubSystems.Intake;
 import org.firstinspires.ftc.teamcode.decode.SubSystems.Lift;
-import org.firstinspires.ftc.teamcode.opmodes.teleop.MainTeleOp;
 import org.firstinspires.ftc.teamcode.util.Vector2D;
 
 /**
- * This is a simple teleop routine for testing localization. Drive the robot around like a normal
- * teleop routine and make sure the robot's estimated pose matches the robot's actual pose (slight
- * errors are not out of the ordinary, especially with sudden drive motions). The goal of this
- * exercise is to ascertain whether the localizer has been configured properly (note: the pure
- * encoder localizer heading may be significantly off if the track width has not been tuned).
+Primary auto opmode
  */
 @Config
 
 @Autonomous(group = "drive")
-public class AutoWorlds extends OpMode {
-    public IntoTheDeepRobot robot = new IntoTheDeepRobot(0, 0, 0);
+public class AutoQual extends OpMode {
+
+    public DecodeRobot robot = new DecodeRobot(0, 0, 0);
     public boolean isBlue = true;
     private boolean center=true;
     public int autoChoice = 1;
     private double angle = 0;
     private int delay=0;
 
-    private int dropCounter = 0;
-    private int placePixel = 2;
+    private int shootCounter = 0;
+
     private int noMoveCycles=0;
     double prox=30;
    // private AprilTagPoseFtc ftcPose=null;
+    //tnes are for testing in FTC Dashboard
     public static double X1;
     public static double Y1;
     public static double X2=-6;
@@ -49,11 +46,14 @@ public class AutoWorlds extends OpMode {
     public static double X4=-36;
     public static double Y4=-39;
     public static double ANGLE=150;
-    public static int MAXSAMPLES=6;
-    int specimenCount=0;
+    //set maxshots to a proper number
+    public static int MAXSHOTS=6;
+    public static int MINSHOTS = 1;
+    int shotCount =0;
     private boolean donePlace=false;
     private boolean notMoving=false;
 
+    //These will be adjusted for our auto states
     private enum DriveState {
         TRAJECTORY_1,
         TRAJECTORY_2,
@@ -66,11 +66,14 @@ public class AutoWorlds extends OpMode {
         DONE_DROP,
         GETFROMSTACK, INTAKEOFF, PLACE2, PLACE3, STARTPLACE2, GETPOS, GET_TO_TAG, NEW_DONE_DROP, NO_PIXEL, PLACE_NOPIXEL, BACKOUT, APRIL, LETGO, COMEDOWN, GOTOBLOCKS, GETBLOCK, TURNBLOCK, DROPBLOCK, ARMUP, EXTEND, RETRACT, TURN2, EXTEND2, GETBLOCK2, RETRACT2, TURNBLOCK2, DROPBLOCK2, TURN3, GETBLOCK3, EXTEND3, RETRACT3, TURNBLOCK3, DROPBLOCK3, EXTENDBACK, ONWAIT, STARTPICKUP2, IDLE, ALIGN, CLOSECLAW, STARTDRIVING, STARTLIFT2, STARTTRANSFER, ALIGNTRANSFER, TRANSFER, RELEASETRANSFER, LIFTUP, FINISHTRANSFER, EXTENDTIME, EXTENDIN, PARK, MOVEDROP, GETBLOCKSUB, LETGO2, ARMUP2, COMEDOWN2, ONWAIT2, STARTTRANSFER2, EXTENDIN2, ALIGNTRANSFER2, TRANSFER2, RELEASETRANSFER2, LIFTUP2, FINISHTRANSFER2, LETGO3, MOVEDROP3, ARMUP3, COMEDOWN3, ONWAIT3, STARTTRANSFER3, EXTENDIN3, ALIGNTRANSFER3, TRANSFER3, RELEASETRANSFER3, LIFTUP3, FINISHTRANSFER3, GOTOBLOCKS3, GETBLOCKSUB3, LETGO4, ARMUP4, MOVEDROP4, COMEDOWN4, GETBLOCK4, GETBLOCKSUB4, GOTOBLOCKS4, ONWAIT4, RETRACT4, STARTTRANSFER4, EXTENDIN4, ALIGNTRANSFER4, TRANSFER4, RELEASETRANSFER4, LIFTUP4, FINISHTRANSFER4, DROPBLOCK4, WAITARM2, WAITARM3, WAITARM4, EXTENDTIME2, PLACE
     }
+
+    //change enum values to match our choice of park locations
     private enum ParkState {
         LEFTSIDE,
         RIGHTSIDE
     }
 
+    //we may not need - tracks the state of any given intake sequence
     private enum IntakeState {
      GETBLOCK,
      ONWAIT,
@@ -79,17 +82,17 @@ public class AutoWorlds extends OpMode {
 
     private IntakeState intakeState= IntakeState.IDLE;
 
-
+    //we will need to change names and add more paths for our various ways of doing auto (which first, whether we dump, etc)
     private enum Path {
-        BASKET(6),
+        BASKET(6),//need to set values for number of shots for each path if that helps
         SPECIMEN(4);//,
        // STOP;
-       private final int defaultSamples;
+       private final int defaultShots;
        Path(final int newValue) {
-           defaultSamples = newValue;
+           defaultShots = newValue;
        }
 
-        public int getSamples() { return defaultSamples;}
+        public int getShots() { return defaultShots;}
         private static Path[] vals = values();
         public Path next(){
 
@@ -100,7 +103,9 @@ public class AutoWorlds extends OpMode {
         }
     }
     private Path path = Path.SPECIMEN ;
-    private enum DropState {
+
+    //will need to change enums for clarity, but this will track our shooter operations. We may wind up moving into a shooter class
+    private enum ShootState {
         DROP_1,
         DROP_2,
         DROP_3,
@@ -121,13 +126,14 @@ public class AutoWorlds extends OpMode {
 
     ParkState parkSide=parkSide= ParkState.RIGHTSIDE;//default for blue1;
 
+    //this will track our spindexer states. We might wind up moving to a separate class
     public enum TransferStates {
         OPEN,
         PICKUP,
         DONE, FINISHPLACE, HALFDONE, STARTDROPOFF, DROPOFF, STARTPLACE, HALFRETRACT, IDLE, STARTPICKUP, STARTTRANSFER, TRANSFER, ALIGNTRANSFER, RESET, CLOSE, RELEASETRANSFER, LIFTUP, FINISHTRANSFER, DROPWAIT, GETTHERE, COMEDOWN, PLACEDONE, LETGO, PLACEWAIT
     }
 
-    public MainTeleOp.TransferStates transferState = MainTeleOp.TransferStates.IDLE;
+    private TransferStates transferState = TransferStates.IDLE;
 
 
     public class SwerveHeading {
@@ -138,25 +144,18 @@ public class AutoWorlds extends OpMode {
             robotHeading=h;
         }
     }
-
-    private SwerveHeading[][][] driveArray = new SwerveHeading[2][2][6];
-    private SwerveHeading[][][] boardArray= new SwerveHeading[2][2][3];
-    private SwerveHeading[][][] boardArray2= new SwerveHeading[2][2][3];
+    //if we want all headings stored in advance
+    //private SwerveHeading[][][] driveArray = new SwerveHeading[2][2][6];
+    //private SwerveHeading[][][] boardArray= new SwerveHeading[2][2][3];
+    //private SwerveHeading[][][] boardArray2= new SwerveHeading[2][2][3];
     private int blueSide=1;
     private int redSide=0;
-    private int boardSide=0;
-    private int farSide=1;
-    private int samples=5;
-    private boolean yellowLeft=true;
+    private int shots=5;//set shots to a proper number
     private int color=blueSide;
-    private enum PlaceState {
-        DROPPING,
-        PLACING
-    }
+
 boolean isDPRDown=false;
     private DriveState driveState = DriveState.TRAJECTORY_1;
-    private DropState dropState = DropState.IDLE;
-    private PlaceState placeState= PlaceState.DROPPING;
+    private ShootState dropState = ShootState.IDLE;
     public ElapsedTime dropTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
     public ElapsedTime intakeTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
     public ElapsedTime extendTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
@@ -181,18 +180,9 @@ boolean isDPRDown=false;
         robot.readi2c(); //TODO: Read only when needed
         robot.arm.openStopper();
         robot.controller.getController().setLocalizerMode(CombinedLocalizer.PoseMode.SPARK);
-        //robot.intake.wrist.setPosition(.857);
-       // robot.arm.armServo.setPosition(.93);
-        robot.lift.liftFullDown();
 
-        robot.intake.wristAuto();
-        robot.intake.extendMin();
-        if (robot.intake.isExtendTouch()){
-            robot.intake.setExtendoPos(.6 );
-            robot.intake.catchOpen();
-        }
-        robot.arm.clawWristAuto();
-        robot.arm.armAuto();
+        //include robot and subsytem initialization here
+
 
         dropTimer.startTime();
         robot.controller.getController().initzeroPower(Math.toRadians(270));
@@ -215,39 +205,42 @@ boolean isDPRDown=false;
 
         //robot.controller.getController().updateLocalizer(robot.sparkODO.getPose().h);
        // robot.controller.getController().zeroPower(0);
+
+        //set the path
         if (currentGamepad1.dpad_right&!previousGamepad1.dpad_right)
         {
             //  isDPRDown=true;
             path=path.next();
-            samples=path.getSamples();
+            shots=path.getShots();
 
         }
-
+        //change number of shots
         if (currentGamepad1.dpad_up & !previousGamepad1.dpad_up)
         {
             //
             isDPRDown=true;
-            //samples=5;
-            samples++;
-            samples= Range.clip(samples,4,MAXSAMPLES);
+
+            shots++;
+            shots= Range.clip(shots,MINSHOTS,MAXSHOTS);
         }
         if (currentGamepad1.dpad_down & !previousGamepad1.dpad_down)
         {
             //  isDPRDown=true;
-            samples--;
-            samples= Range.clip(samples,4,MAXSAMPLES);
+            shots--;
+            shots= Range.clip(shots,MINSHOTS,MAXSHOTS);
             //samples=4;
         }
 
         if(gamepad1.right_trigger > 0.5){
-            robot.arm.closeClaw();
-            //   robot.lift.extendFull();
-        }
-        else if(gamepad1.left_trigger > 0.5){
-            robot.arm.openClaw();
+            //add any motion we need from the robot here (moving spindexer, adjusting etc.)
+            //robot.arm.closeClaw();
 
         }
-        //init the swerve
+        else if(gamepad1.left_trigger > 0.5){
+            //robot.arm.openClaw();
+
+        }
+        //init the swerve, choose a side
         if(gamepad1.x){
             isBlue = true;
 
@@ -259,8 +252,10 @@ boolean isDPRDown=false;
             color=redSide;
 
         }
+
+        //set start position here
         if(gamepad1.a){
-            center= true;
+            center= true; //may need an enum depending on how many start positions
 
         }
         else if(gamepad1.y){
@@ -269,6 +264,7 @@ boolean isDPRDown=false;
 
         }
 
+        //record side for teleop
         Data.setBlue(isBlue);
        // if (gamepad1.dpad_right && !isDPRDown)
 
@@ -277,16 +273,18 @@ boolean isDPRDown=false;
 
 
 
-      telemetry.addData("Start Pos ay Center (true) Side (false)" , center);
+      telemetry.addData("Start Pos ay Center (true) Side (false)" , center); //change to match start pos options
         telemetry.addData("isBlue xb Blue (true) Red (false)" , isBlue);
      //   telemetry.addData("park trigger", parkSide);
-        telemetry.addData("Specimen Basket dpad right", path);
-      telemetry.addData("Basket Sample Count dpad up/down", samples);
-        telemetry.addData("arm servo",robot.arm.armServo.getPosition());
-        telemetry.addData("extendo",robot.intake.extendo.getPosition());
+        telemetry.addData("Path choice dpad right", path);
+      telemetry.addData("Shot Count dpad up/down", shots);
+      //add telemetry here for things we want to check - like apriltag distance and angle, making sure we can read obelisk, imu, etc.
+      //  telemetry.addData("arm servo",robot.arm.armServo.getPosition());
+      //  telemetry.addData("extendo",robot.intake.extendo.getPosition());
        // telemetry.addData("imu",(robot.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES)));
        // telemetry.addData("localizer",Math.toDegrees((((robot.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) + Math.toRadians(360)) % Math.toRadians(360)) + Math.toRadians(180)) % Math.toRadians(360)));
 
+//set our starting positions by path, starting pos, and color
 if (path== Path.SPECIMEN) {
     if (isBlue) { //TODO: Set start poses
         robot.controller.getController().initzeroPower(Math.toRadians(0));
@@ -316,8 +314,7 @@ if (path== Path.SPECIMEN) {
        // updatePoseUltrasonic();
 
        // robot.webcam.isBlue=isBlue;
-
-       // telemetry.addData("Position", placePixel);
+        //robot checking telemetry
         telemetry.addData("Angle", Math.toDegrees(robot.getOrientation()));
        // telemetry.addData("imu",(robot.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES)));
         telemetry.addData("position",robot.controller.getController().getPositionVector());
@@ -332,9 +329,8 @@ if (path== Path.SPECIMEN) {
 
     }
         public void start(){
-            robot.lift.liftRear.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
             Data.setBlue(isBlue);
-            robot.ultrasonicLocalizer.setBlue(isBlue);
+            robot.ultrasonicLocalizer.setBlue(isBlue); //we likely won't use this this year
             robot.controller.getController().setIsAuto(true);
             for (LynxModule module : robot.allHubs) {
                 module.clearBulkCache();
@@ -343,7 +339,8 @@ if (path== Path.SPECIMEN) {
             robot.readi2c();
             robot.controller.getController().setLocalizerMode(CombinedLocalizer.PoseMode.SPARK);
             robot.controller.getController().updateCombinedLocalizer();
-            // robot.controller.getController().updateLocalizer(robot.sparkODO.getPose().h);
+            // robot.controller.getController().updateLocalizer(robot.sparkODO.getPose().h)
+            // Start the state machines for the particular path
             if (path== Path.SPECIMEN) {
 
 
@@ -357,12 +354,6 @@ if (path== Path.SPECIMEN) {
                 }
 
 
-         //   robot.webcam.isBlue=isBlue;
-          // placePixel=robot.webcam.pos;//huskylens.findPropPosition(isBlue, autoChoice);
-           // placePixel = 1;
-          /*  while (!robot.huskylens.gotPos){
-
-            }*/
             /*This was for testing auto
               double[][] points = {{50,50}, {45,10}, {32,4},{0,0}};
 
@@ -371,14 +362,15 @@ if (path== Path.SPECIMEN) {
 
 
              */
+            //if we use a webcam
           //  robot.webcam.setTagPipeline();
            // robot.webcam.cameraClose();
             robot.controller.update(robot.getOrientation());
             robot.update();
-            //dropState = DropState.DROP_1;  
 
         }
 
+        //note: loop only runs after the "start" code runs.
         public void loop(){
             for (LynxModule module : robot.allHubs) {
                 module.clearBulkCache();
@@ -412,6 +404,8 @@ if (path== Path.SPECIMEN) {
             // telemetry.addData("imu",(robot.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES)));
            // telemetry.addData("localizer",Math.toDegrees((((robot.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) + Math.toRadians(360)) % Math.toRadians(360)) + Math.toRadians(180)) % Math.toRadians(360)));
 
+            //this is the primary work in auto - it calls the intake state machine and the path macros.
+            // Decode will likely do something similar. Our intake is much simpler and will likely not need an intake machine
             if (path== Path.SPECIMEN) { //colors handled in main code
                     intake();
                     specimen();
@@ -421,15 +415,16 @@ if (path== Path.SPECIMEN) {
                 //  System.out.println("14423 state: "+driveState);
 
                 }
-
+            //we leave this in in case we ever want to manually drive in auto
             //drive();
 
-           // dropMacro();
+
              if(!robot.controller.isDriving()){
                 robot.controller.zeroPower();
             }
             robot.controller.update(robot.getOrientation());
             robot.update();
+            //save location for teleop
             Data.setPose(robot.controller.getController().combinedLocalizer.getSparkVector());
             Data.setHeading(robot.getOrientation());
           //  robot.datalogWrapper.datalogWrite();
@@ -448,6 +443,8 @@ if (path== Path.SPECIMEN) {
         /*
         * Blue Auto
         */
+
+    //for use with webcam
        /* public AprilTagPoseFtc getTag(int tagcheck){
             AprilTagPoseFtc tempTag;
             if (isNull(robot.webcam.tagPoseData[tagcheck])){
@@ -462,6 +459,8 @@ if (path== Path.SPECIMEN) {
 
 
         */
+        //We likely won't need this since our intake is basically on and off, which can be handled by states (and sensors) in the intake subsystem
+    //intothedeep needed more because intake required several subsystems and complex timing depending on location
         public void intake() {
             switch(intakeState) {
                 case IDLE:
@@ -486,23 +485,7 @@ if (path== Path.SPECIMEN) {
                         extendTimer.reset();
                         intakeState = IntakeState.EXTENDSPECIMEN;
                     }
-                    /* if (specimenCount > 3) {
-                        if (intakeTimer.milliseconds() > 500) {//150
 
-                            intakeTimer.reset();
-                            extendTimer.reset();
-                            intakeState = IntakeState.EXTEND;
-                        }
-                    } else {
-                        if (intakeTimer.milliseconds() > 100) {//150
-
-                            intakeTimer.reset();
-                            extendTimer.reset();
-                            intakeState = IntakeState.EXTEND;
-                        }
-                    }
-
-                    */
                     break;
                 case EXTENDSPECIMEN:
                  //   System.out.println("14423 intakestate"+robot.intake.intakeState+"extendo Pos "+ robot.intake.extendo.getPosition());
@@ -525,7 +508,7 @@ if (path== Path.SPECIMEN) {
                             intakeState= IntakeState.IDLE;
                             //driveState = DriveState.RETRACT;
                         } else {
-                            if (specimenCount < 5) {
+                            if (shotCount < 5) {
                                 robot.intake.extendoOutFast();
                             }//was fast
                             else {
@@ -539,7 +522,7 @@ if (path== Path.SPECIMEN) {
                     break;
 
                 case GETBLOCK:
-                    if (specimenCount > 3) {
+                    if (shotCount > 3) {
                         if (intakeTimer.milliseconds() > 400) {
                             robot.intake.intakeStopperClosed();
                             robot.intake.wristPickupSub();
@@ -562,7 +545,7 @@ if (path== Path.SPECIMEN) {
                 case ONWAIT:
                     robot.intake.getIntakeProx();
                     if (intakeTimer.milliseconds() > 100) {
-                        if (specimenCount > 3) {
+                        if (shotCount > 3) {
                             robot.intake.wristPickupSub();
                         } else {
                             robot.intake.wristPickup();
@@ -571,23 +554,7 @@ if (path== Path.SPECIMEN) {
                         extendTimer.reset();
                         intakeState = IntakeState.EXTEND;
                     }
-                    /* if (specimenCount > 3) {
-                        if (intakeTimer.milliseconds() > 500) {//150
 
-                            intakeTimer.reset();
-                            extendTimer.reset();
-                            intakeState = IntakeState.EXTEND;
-                        }
-                    } else {
-                        if (intakeTimer.milliseconds() > 100) {//150
-
-                            intakeTimer.reset();
-                            extendTimer.reset();
-                            intakeState = IntakeState.EXTEND;
-                        }
-                    }
-
-                    */
                     break;
                 case EXTEND:
                     if (intakeTimer.milliseconds() > 25) {//TODO add getting,separate extend, move off
@@ -599,7 +566,7 @@ if (path== Path.SPECIMEN) {
                             robot.intake.intakeState= Intake.IntakeStates.OFF;
                             // driveState = DriveState.RETRACT;
 
-                        } else if (specimenCount>3&&extendTimer.milliseconds()>1000) {
+                        } else if (shotCount >3&&extendTimer.milliseconds()>1000) {
                             dropTimer.reset();
                             intakeTimer.reset();
                             // robot.intake.gripperClose();
@@ -614,7 +581,7 @@ if (path== Path.SPECIMEN) {
                             intakeState= IntakeState.IDLE;
                             //driveState = DriveState.RETRACT;
                         } else {
-                            if (specimenCount < 4) {
+                            if (shotCount < 4) {
                                 robot.intake.extendoOutFast();
                             }//was fast
                             else {
@@ -699,7 +666,8 @@ if (path== Path.SPECIMEN) {
             }
         }
 
-
+  //this does most of the work for auto. Each state is very short, with the next state triggered by time or sensor.
+    //we will need to figure out how to ensure we have three balls
     public void basket() {
         //  robot.controller.update(robot.getOrientation());
         switch (driveState) {
@@ -736,7 +704,7 @@ if (path== Path.SPECIMEN) {
             case LETGO:
                 if (dropTimer.milliseconds() >  0) {//220
 
-                    specimenCount++;  //specimentCOunt=1
+                    shotCount++;  //specimentCOunt=1
 
 
                         robot.arm.armBackBasket();
@@ -952,7 +920,7 @@ if (path== Path.SPECIMEN) {
             case LETGO2:
                 if (dropTimer.milliseconds() > 400) {//220
 
-                    specimenCount++; //specimenCOunt=2
+                    shotCount++; //specimenCOunt=2
 
                         robot.arm.armBackBasket();
                         //robot.arm.openClaw();
@@ -1166,7 +1134,7 @@ if (path== Path.SPECIMEN) {
             case LETGO3:
                 if (dropTimer.milliseconds() > 0) {//220
 
-                    specimenCount++;//specimenCount=3
+                    shotCount++;//specimenCount=3
 
 
                         // if (dropTimer.milliseconds() > 250) {
@@ -1432,11 +1400,11 @@ if (path== Path.SPECIMEN) {
             case LETGO4:
                 if (dropTimer.milliseconds() > 100) {//220
 
-                    specimenCount++;//specimenCount=4,5,6
+                    shotCount++;//specimenCount=4,5,6
 
 
                         // if (dropTimer.milliseconds() > 250) {
-                       if (specimenCount<samples) {
+                       if (shotCount <shots) {
                         robot.arm.armBackBasket();
                         //robot.arm.openClaw();
                         dropTimer.reset();
@@ -1452,7 +1420,7 @@ if (path== Path.SPECIMEN) {
 
                 if (dropTimer.milliseconds() > 25) {
                     if (isBlue) {//TODO: Custom positions
-                        switch (specimenCount) {
+                        switch (shotCount) {
                             case 1:
                                 //     robot.controller.moveToPoint(new Vector2D(60, -48), Math.toRadians(245));//250//240
                                 break;
@@ -1475,7 +1443,7 @@ if (path== Path.SPECIMEN) {
                         }
 
                     } else {
-                        switch (specimenCount) {
+                        switch (shotCount) {
                             case 1:
                                 //  robot.controller.moveToPoint(new Vector2D(-60, 48), Math.toRadians(66));//-60,48
                                 break;
@@ -1529,7 +1497,7 @@ if (path== Path.SPECIMEN) {
                     //robot.lift.liftFullDown();
                     // robot.lift.setLiftPos(0);
 
-                    if (specimenCount < (samples)) {
+                    if (shotCount < (shots)) {
 
                         //  driveState = DriveState.GOTOBLOCKS;
                         // driveState = DriveState.IDLE;
@@ -1767,704 +1735,6 @@ if (path== Path.SPECIMEN) {
 
 
 
-    public void specimenWorldTry(){
-      //  robot.controller.update(robot.getOrientation());
-        switch(driveState) {
-            case IDLE:
-                break;
-            case TRAJECTORY_1:
-                robot.controller.getController().setLocalizerMode(CombinedLocalizer.PoseMode.SPARK);
-                if (robot.controller.remainingDistance < 20) {
-                    robot.arm.closeStopper();
-                }
-
-                if (Math.abs(robot.controller.remainingDistance) < 3) {
-                    driveState = DriveState.DROP;
-                }
-
-                break;
-            case DROP:
-                //   robot.purpleOpen();
-                dropTimer.reset();
-                robot.lift.liftPlace();
-
-                driveState = DriveState.LETGO;
-              /*  switch (path) {
-                    case BASKET:
-                        driveState = DriveState.DONE_DROP;
-                        break;
-                    case SPECIMEN:
-                        driveState = DriveState.TRAJECTORY_5;
-                        break;
-                    case STOP:
-                        driveState = DriveState.BACKOUT;
-                        break;
-                }
-               */
-
-                break;
-            case LETGO:
-                // if (robot.lift.isAtPosition()) {
-                if (!robot.controller.isDriving() || robot.controller.noMoveCycles > 40) {
-                    if (robot.controller.isDriving() || robot.controller.noMoveCycles > 40) {
-                        robot.controller.abort = true;
-                    }
-
-                    robot.arm.openClaw();
-                    dropTimer.reset();
-                    driveState = DriveState.ARMUP;
-                }
-                break;
-            case ARMUP:
-                if (dropTimer.milliseconds() > 100) {
-                    //robot.arm.armPlaceDone();
-                    //  robot.arm.armPickup();
-                    driveState = DriveState.COMEDOWN;
-                    dropTimer.reset();
-                }
-                break;
-            case COMEDOWN:
-                if (dropTimer.milliseconds() > 25) {//150
-                    //TODO include test that place is done
-                    //robot.lift.liftFullDown();
-                    robot.lift.setLiftPos(0);
-                    robot.arm.openStopper();
-                    //   driveState = DriveState.DROP;
-
-                    // else
-
-                    //if(!robot.controller.isDriving()){
-
-                    //  driveState = DriveState.DROP;
-                    // }
-                    specimenCount++;//1 after preload, 2 after second preload, 3,4,5
-                    if (specimenCount == 1) {
-
-                        driveState = DriveState.GOTOBLOCKS;
-                    } else {
-                        if (specimenCount < samples) {
-                            //driveState = DriveState.ALIGN;
-                            driveState = DriveState.STARTDRIVING;
-                        } else {
-                            robot.arm.armPreBasket();
-                            // robot.lift.setLiftPos(0);
-                            driveState = DriveState.PARK;
-                        }
-                    }
-                }
-                break;
-
-            case GOTOBLOCKS:
-                //   if(robot.lift.isAtPosition()){//&&robot.arm.isArmAtTransfer()
-                //  robot.arm.armTransfer();
-
-                //ANGLE
-                if (isBlue) {
-                    double[][] points = {{-39, -34}, {-34, -47}, {-7, -45}, {robot.controller.getController().getPositionVector().x, robot.controller.getController().getPositionVector().y}};
-                    //driveState=DriveState.IDLE;
-                    robot.controller.setCurve(points, Math.toRadians(214), 30);//222
-                } else {
-                    double[][] points = {{39, 34}, {34, 47}, {7, 45}, {robot.controller.getController().getPositionVector().x, robot.controller.getController().getPositionVector().y}};
-                    //driveState=DriveState.IDLE;
-                    robot.controller.setCurve(points, Math.toRadians(34), 30);
-
-                }
-
-                    /* STRAIGHT
-                    double[][] points = {{-36 ,-29}, {-25,-45}, {-6,-51},{robot.controller.getController().getPositionVector().x,robot.controller.getController().getPositionVector().y}};
-                    //driveState=DriveState.IDLE;
-                    robot.controller.setCurve(points, Math.toRadians(193), 30);
-
-                     */
-                // robot.intake.extendLevels(9 );
-                // robot.intake.wristPickup();
-                driveState = DriveState.GETBLOCK;
-                //    }
-                break;
-            case GETBLOCK:
-                if (robot.controller.remainingDistance < 12) {
-                    robot.intake.extendLevels(4);
-                    intakeTimer.reset();
-                    intakeState = IntakeState.GETBLOCK;//6
-                }
-                if (!robot.controller.isDriving()) {
-
-                    //  robot.intake.intakeState= Intake.IntakeStates.ONAUTO;
-
-                    //robot.intake.intakeOn();
-
-                    driveState = DriveState.ONWAIT;
-                    // driveState = DriveState.IDLE;
-                    dropTimer.reset();
-                }
-                break;
-            case ONWAIT:
-
-                if (intakeState == IntakeState.IDLE) {
-                    if (isBlue) {
-                        robot.controller.moveToPoint(new Vector2D(-65, -49), Math.toRadians(272));
-                    } else {
-                        robot.controller.moveToPoint(new Vector2D(65, 49), Math.toRadians(92));
-                    }
-                    driveState = DriveState.RETRACT;
-                }
-                /*
-                if (dropTimer.milliseconds()>50 ) {
-                    robot.intake.wristPickup();
-                    robot.intake.intakeState= Intake.IntakeStates.ONAUTO;
-
-                    dropTimer.reset();
-                    driveState = DriveState.EXTEND;
-                }
-
-                 */
-                break;
-           /*
-            case EXTEND:
-                if (dropTimer.milliseconds()>20) {
-                if (!(robot.intake.intakeState== Intake.IntakeStates.GETTINGAUTO||robot.intake.intakeState== Intake.IntakeStates.ACQUIRED) && robot.intake.extendo.getPosition()< robot.intake.MAXEXTEND ) {
-                    robot.intake.extendoOutFast();
-                    dropTimer.reset();
-                } else {
-                    dropTimer.reset();
-                    robot.intake.intakeState= Intake.IntakeStates.OFF;
-                    robot.intake.extendLevels(4 );//4
-                    //robot.intake.wristTransfer();
-                    //TODO: Code to get blocks with intake }
-                    driveState = DriveState.RETRACT;
-                } }
-                break;
-
-            */
-            case RETRACT:
-
-                if (dropTimer.milliseconds() > 100) {//250
-
-                    robot.intake.wristTransfer();
-
-                    robot.arm.armTransfer();
-                    robot.intake.extendTransfer();
-
-                    driveState = DriveState.STARTTRANSFER;
-                    //driveState = DriveState.IDLE;
-                    dropTimer.reset();
-                }
-
-                break;
-            case STARTTRANSFER:
-
-
-                if (dropTimer.milliseconds() > 100) {//500
-                    //    robot.controller.moveToPoint(new Vector2D(61, -58), Math.toRadians(225));
-                    dropTimer.reset();
-                    driveState = DriveState.EXTENDIN;
-                }
-
-
-                robot.lift.liftFullDown();
-                // robot.lift.setLiftPos(0);
-                // robot.arm.transferClaw();
-
-
-                break;
-
-
-            case EXTENDIN:
-                robot.intake.getExtendProx();
-
-                if (robot.intake.isExtendTouch() || dropTimer.milliseconds() > 1000) {//800//1100
-                    driveState = DriveState.ALIGNTRANSFER;
-                    robot.intake.wristTransfer();
-                }
-
-                break;
-
-            case ALIGNTRANSFER: //if we are in transfer position, rotate the wrist to grab the block
-
-                if (robot.lift.isAtPosition() && (dropTimer.milliseconds() > 50)) {//400
-                    //   robot.arm.clawWristTransfer();
-                    //reset time to give time for servo to move
-                    robot.intake.intakeState = Intake.IntakeStates.TRANSFER;
-                    if (!robot.intake.isStopperSensor()) {//robot.intake.isIntakeSensor()
-                        robot.intake.intakeStopperClosed();
-                        robot.intake.intakeTransfer();
-                    }
-                    dropTimer.reset();
-                    driveState = DriveState.TRANSFER;
-                }
-
-                break;
-            case TRANSFER://close the claw
-                //TODO: test the timing
-                // robot.intake.intakeStopperClosed();
-                robot.intake.intakeTransfer();
-                if (robot.intake.isStopperSensor() && dropTimer.milliseconds() > 135 || dropTimer.milliseconds() > 450) {//350//(!robot.intake.isIntakeSensor()&&dropTimer.milliseconds()>50)//reduced from 300 and 500 because we are already getting
-                    //  System.out.println("14423 Sensor "+robot.intake.isIntakeSensor());
-                    //  System.out.println("14423 Timer "+dropTimer.milliseconds());
-                    //      if (dropTimer.milliseconds()>900){
-                    robot.intake.intakeStopperOpen();
-                    robot.intake.intakeState = Intake.IntakeStates.OFF;
-                    robot.arm.closeClaw();
-                    dropTimer.reset();
-                    driveState = DriveState.RELEASETRANSFER; //TODO: Change this to move to position
-                }
-                break;
-            case RELEASETRANSFER: //spit and raise arm
-                if (dropTimer.milliseconds() > 150) {//250
-                    //robot.intake.intakeSpit();
-                    dropTimer.reset();
-                    //     robot.intake.intakeStopperClosed();
-                    driveState = DriveState.LIFTUP;
-                }
-
-                //liftStates = LiftStates.LIFT_UP_RETURN;
-                // openState=OpenStates.DONE;
-                break;
-            case LIFTUP://lift up
-                if (dropTimer.milliseconds() > 100) {//TODO: Set time
-                    robot.intake.intakeTransfer();
-                    robot.lift.liftTransferAuto();
-                    robot.intake.wristTransfer();
-                    // robot.lift.setLiftPos(Lift.LiftLevel.BASKETHIGH.getValue());
-
-
-                    robot.lift.isPlacing = false;
-
-                    dropTimer.reset();
-                    driveState = DriveState.FINISHTRANSFER;
-                }
-                break;
-            case FINISHTRANSFER://if up, then turn intake off, turn claw wrist out, and come down
-                if (robot.lift.isAtPosition()) {
-                    //if (dropTimer.milliseconds() > 200) {
-                    //  robot.intake.intakeOff();
-                    //  robot.intake.extendFull();
-                    robot.intake.intakeState = Intake.IntakeStates.OFF;
-                    // robot.arm.clawWristIntake();
-                    //pickup=false;
-                    // robot.lift.setLiftPos(0);
-                    // robot.arm.closeClawBasket();
-                    robot.arm.armPickup();
-
-
-
-                  /*  if (isBlue) {
-                        robot.controller.moveToPoint(new Vector2D(59,-59), Math.toRadians(45));
-                    } else {
-                        robot.controller.moveToPoint(new Vector2D(-59,59), Math.toRadians(225));
-                    }
-
-
-                   */
-                    driveState = DriveState.TRAJECTORY_2;
-                }
-                break;
-            case TRAJECTORY_2:
-                if (robot.controller.remainingDistance < 7) {
-                    robot.intake.extendLevels(4);
-                    intakeState = IntakeState.GETBLOCK;//6
-                }
-                if (!robot.controller.isDriving()) {
-                    dropTimer.reset();
-                    // robot.arm.openClaw();
-
-                    driveState = DriveState.WAITARM2;
-                }
-                break;
-            case WAITARM2:
-                if (dropTimer.milliseconds() > 200) {
-                    robot.lift.liftFullDown();
-                }
-                if (dropTimer.milliseconds() > 900) {
-                    robot.arm.openClaw();
-                    dropTimer.reset();
-                    driveState = DriveState.ONWAIT2;
-                }
-                break;
-
-            case ONWAIT2:
-                if (dropTimer.milliseconds() > 200) {
-                    robot.arm.armTransfer();
-                }
-                if (intakeState == IntakeState.IDLE) {
-                    dropTimer.reset();
-                    if (isBlue) {
-                        robot.controller.turnOnly(Math.toRadians(252));
-                    } else {
-                        robot.controller.turnOnly(Math.toRadians(72));
-                    }
-                    driveState = DriveState.RETRACT2;
-                }
-
-                break;
-
-            case RETRACT2:
-
-                if (dropTimer.milliseconds() > 100) {//250
-
-                    robot.intake.wristTransfer();
-
-                    robot.arm.armTransfer();
-                    robot.intake.extendTransfer();
-
-                    driveState = DriveState.STARTTRANSFER2;
-                    //driveState = DriveState.IDLE;
-                    dropTimer.reset();
-                }
-
-                break;
-            case STARTTRANSFER2:
-
-
-                if (dropTimer.milliseconds() > 100) {//500
-                    //    robot.controller.moveToPoint(new Vector2D(61, -58), Math.toRadians(225));
-                    dropTimer.reset();
-                    driveState = DriveState.EXTENDIN2;
-                }
-
-
-                robot.lift.liftFullDown();
-                // robot.lift.setLiftPos(0);
-                // robot.arm.transferClaw();
-
-
-                break;
-
-
-            case EXTENDIN2:
-                robot.intake.getExtendProx();
-
-                if (robot.intake.isExtendTouch() || dropTimer.milliseconds() > 1000) {//800//1100
-                    driveState = DriveState.ALIGNTRANSFER2;
-                    robot.intake.wristTransfer();
-                }
-
-                break;
-
-            case ALIGNTRANSFER2: //if we are in transfer position, rotate the wrist to grab the block
-
-                if (robot.lift.isAtPosition() && (dropTimer.milliseconds() > 400)) {//400
-                    //   robot.arm.clawWristTransfer();
-                    //reset time to give time for servo to move
-                    robot.intake.intakeState = Intake.IntakeStates.TRANSFER;
-                    if (!robot.intake.isStopperSensor()) {//robot.intake.isIntakeSensor()
-                        robot.intake.intakeStopperClosed();
-                        robot.intake.intakeTransfer();
-                    }
-                    dropTimer.reset();
-                    driveState = DriveState.TRANSFER2;
-                }
-
-                break;
-            case TRANSFER2://close the claw
-                //TODO: test the timing
-                // robot.intake.intakeStopperClosed();
-                robot.intake.intakeTransfer();
-                if (robot.intake.isStopperSensor() && dropTimer.milliseconds() > 135 || dropTimer.milliseconds() > 450) {//350//(!robot.intake.isIntakeSensor()&&dropTimer.milliseconds()>50)//reduced from 300 and 500 because we are already getting
-                    //  System.out.println("14423 Sensor "+robot.intake.isIntakeSensor());
-                    //  System.out.println("14423 Timer "+dropTimer.milliseconds());
-                    //      if (dropTimer.milliseconds()>900){
-                    robot.intake.intakeStopperOpen();
-                    robot.intake.intakeState = Intake.IntakeStates.OFF;
-                    robot.arm.closeClaw();
-                    dropTimer.reset();
-                    driveState = DriveState.RELEASETRANSFER2; //TODO: Change this to move to position
-                }
-                break;
-            case RELEASETRANSFER2: //spit and raise arm
-                if (dropTimer.milliseconds() > 150) {//250
-                    //robot.intake.intakeSpit();
-                    dropTimer.reset();
-                    //     robot.intake.intakeStopperClosed();
-                    driveState = DriveState.LIFTUP2;
-                }
-
-                //liftStates = LiftStates.LIFT_UP_RETURN;
-                // openState=OpenStates.DONE;
-                break;
-            case LIFTUP2://lift up
-                if (dropTimer.milliseconds() > 100) {//TODO: Set time
-                    robot.intake.intakeTransfer();
-                    robot.lift.liftTransferAuto();
-                    robot.intake.wristTransfer();
-                    // robot.lift.setLiftPos(Lift.LiftLevel.BASKETHIGH.getValue());
-
-
-                    robot.lift.isPlacing = false;
-
-                    dropTimer.reset();
-                    driveState = DriveState.FINISHTRANSFER2;
-                }
-                break;
-            case FINISHTRANSFER2://if up, then turn intake off, turn claw wrist out, and come down
-                if (robot.lift.isAtPosition()) {
-                    //if (dropTimer.milliseconds() > 200) {
-                    //  robot.intake.intakeOff();
-                    //  robot.intake.extendFull();
-                    robot.intake.intakeState = Intake.IntakeStates.OFF;
-                    // robot.arm.clawWristIntake();
-                    //pickup=false;
-                    // robot.lift.setLiftPos(0);
-                    // robot.arm.closeClawBasket();
-                    robot.arm.armPickup();
-
-
-                  /*  if (isBlue) {
-                        robot.controller.moveToPoint(new Vector2D(59,-59), Math.toRadians(45));
-                    } else {
-                        robot.controller.moveToPoint(new Vector2D(-59,59), Math.toRadians(225));
-                    }
-
-
-                   */
-                    driveState = DriveState.TRAJECTORY_3;
-                }
-                break;
-            case TRAJECTORY_3:
-                if (robot.controller.remainingAngle < Math.abs(Math.toRadians(15))) {
-                    robot.intake.extendLevels(4);
-                    intakeState = IntakeState.GETBLOCK;//6
-                }
-                if (!robot.controller.isDriving()) {
-                    //   robot.arm.openClaw();
-                    dropTimer.reset();
-                    driveState = DriveState.WAITARM3;
-                }
-                break;
-            case WAITARM3:
-                if (dropTimer.milliseconds() > 200) {
-                    robot.lift.liftFullDown();
-                }
-                if (dropTimer.milliseconds() > 900) {
-                    robot.arm.openClaw();
-                    driveState = DriveState.ONWAIT3;
-                }
-                break;
-            case ONWAIT3:
-
-                if (intakeState == IntakeState.IDLE) {
-                    /*Decide whether to drive some or turn
-                    if (isBlue) {//manual setup the first time, get the right coordinates
-                        robot.controller.moveToPointPrecise(new Vector2D(-45.25, -62), Math.toRadians(270));//-61.75
-                    } else {
-                        robot.controller.moveToPointPrecise(new Vector2D(45.25, 62), Math.toRadians(90));
-                    }
-
-                     */
-                    if (isBlue) {
-                        robot.controller.turnOnly(Math.toRadians(270));
-                    } else {
-                        robot.controller.turnOnly(Math.toRadians(90));
-                    }
-                    driveState = DriveState.RETRACT3;
-                }
-
-                break;
-
-            case RETRACT3:
-
-                if (dropTimer.milliseconds() > 100) {//250
-
-                    robot.intake.wristTransfer();
-
-                    robot.arm.armTransfer();
-                    robot.intake.extendTransfer();
-
-                    driveState = DriveState.STARTTRANSFER3;
-                    //driveState = DriveState.IDLE;
-                    dropTimer.reset();
-                }
-
-                break;
-            case STARTTRANSFER3:
-
-
-                if (dropTimer.milliseconds() > 100) {//500
-                    //    robot.controller.moveToPoint(new Vector2D(61, -58), Math.toRadians(225));
-                    dropTimer.reset();
-                    driveState = DriveState.EXTENDIN3;
-                }
-
-
-                robot.lift.liftFullDown();
-                // robot.lift.setLiftPos(0);
-                // robot.arm.transferClaw();
-
-
-                break;
-
-
-            case EXTENDIN3:
-                robot.intake.getExtendProx();
-
-                if (robot.intake.isExtendTouch() || dropTimer.milliseconds() > 1000) {//800//1100
-                    driveState = DriveState.ALIGNTRANSFER3;
-                    robot.intake.wristTransfer();
-                }
-
-                break;
-
-            case ALIGNTRANSFER3: //if we are in transfer position, rotate the wrist to grab the block
-
-                if (robot.lift.isAtPosition() && (dropTimer.milliseconds() > 50)) {//400
-                    //   robot.arm.clawWristTransfer();
-                    //reset time to give time for servo to move
-                    robot.intake.intakeState = Intake.IntakeStates.TRANSFER;
-                    if (!robot.intake.isStopperSensor()) {//robot.intake.isIntakeSensor()
-                        robot.intake.intakeStopperClosed();
-                        robot.intake.intakeTransfer();
-                    }
-                    dropTimer.reset();
-                    driveState = DriveState.TRANSFER3;
-                }
-
-                break;
-            case TRANSFER3://close the claw
-                //TODO: test the timing
-                // robot.intake.intakeStopperClosed();
-                robot.intake.intakeTransfer();
-                if (robot.intake.isStopperSensor() && dropTimer.milliseconds() > 135 || dropTimer.milliseconds() > 450) {//350//(!robot.intake.isIntakeSensor()&&dropTimer.milliseconds()>50)//reduced from 300 and 500 because we are already getting
-                    //  System.out.println("14423 Sensor "+robot.intake.isIntakeSensor());
-                    //  System.out.println("14423 Timer "+dropTimer.milliseconds());
-                    //      if (dropTimer.milliseconds()>900){
-                    robot.intake.intakeStopperOpen();
-                    robot.intake.intakeState = Intake.IntakeStates.OFF;
-                    robot.arm.closeClaw();
-                    dropTimer.reset();
-                    driveState = DriveState.RELEASETRANSFER3; //TODO: Change this to move to position
-                }
-                break;
-            case RELEASETRANSFER3: //spit and raise arm
-                if (dropTimer.milliseconds() > 150) {//250
-                    //robot.intake.intakeSpit();
-                    dropTimer.reset();
-                    //     robot.intake.intakeStopperClosed();
-                    driveState = DriveState.LIFTUP3;
-                }
-
-                //liftStates = LiftStates.LIFT_UP_RETURN;
-                // openState=OpenStates.DONE;
-                break;
-            case LIFTUP3://lift up
-                if (dropTimer.milliseconds() > 100) {//TODO: Set time
-                    robot.intake.intakeTransfer();
-                    robot.lift.liftTransferAuto();
-                    robot.intake.wristTransfer();
-                    // robot.lift.setLiftPos(Lift.LiftLevel.BASKETHIGH.getValue());
-
-
-                    robot.lift.isPlacing = false;
-
-                    dropTimer.reset();
-                    driveState = DriveState.FINISHTRANSFER3;
-                }
-                break;
-            case FINISHTRANSFER3://if up, then turn intake off, turn claw wrist out, and come down
-                if (robot.lift.isAtPosition()) {
-                    //if (dropTimer.milliseconds() > 200) {
-                    //  robot.intake.intakeOff();
-                    //  robot.intake.extendFull();
-                    robot.intake.intakeState = Intake.IntakeStates.OFF;
-                    // robot.arm.clawWristIntake();
-                    //pickup=false;
-                    // robot.lift.setLiftPos(0);
-                    // robot.arm.closeClawBasket();
-                    robot.arm.armPickup();
-
-
-                    driveState = DriveState.TRAJECTORY_4;
-                }
-                break;
-            case TRAJECTORY_4:
-              /*  if (robot.controller.remainingDistance<6){
-                          //included for opening claw in transit
-                }*/
-                if (!robot.controller.isDriving()) {
-                    dropTimer.reset();
-                    driveState = DriveState.WAITARM4;//no align to 270/90
-                }
-
-
-                break;
-            case WAITARM4:
-                if (dropTimer.milliseconds() > 200){
-       robot.lift.liftFullDown();
-        }
-                if (dropTimer.milliseconds() > 900){
-                    robot.arm.openClaw();
-                driveState = DriveState.STARTDRIVING;
-        }
-                break;
-            case STARTDRIVING:
-           /*     if (robot.controller.getController().getSparkVector().y<-48) {
-                    robot.controller.getController().setLocalizerMode(CombinedLocalizer.PoseMode.ULTRASONIC);
-                } else {
-                    robot.controller.getController().setLocalizerMode(CombinedLocalizer.PoseMode.SPARK);
-                }
-
-            */
-
-              //  if (dropTimer.milliseconds()>100) {
-
-                    if (isBlue) {
-                        robot.controller.moveToPointPrecise(new Vector2D(-35.25, -62), Math.toRadians(270));//-61.75
-                    } else {
-                        robot.controller.moveToPointPrecise(new Vector2D(35.25, 62), Math.toRadians(90));
-                    }
-
-                    driveState = DriveState.CLOSECLAW;
-            //    }
-                break;
-            case CLOSECLAW:
-                if (Math.abs(robot.controller.getController().getSparkVector().y)>52&&Math.abs(robot.controller.getController().getSparkVector().x)>24) {
-                    robot.controller.getController().setLocalizerMode(CombinedLocalizer.PoseMode.ULTRASONIC);
-                } else {
-                    robot.controller.getController().setLocalizerMode(CombinedLocalizer.PoseMode.SPARK);
-                }
-               // updatePoseUltrasonic();
-                if (!robot.controller.isDriving()) {
-                    robot.controller.getController().setLocalizerMode(CombinedLocalizer.PoseMode.SPARK);
-                    robot.arm.closeClaw();
-                    dropTimer.reset();
-                    driveState = DriveState.STARTLIFT2;
-                 //   driveState = DriveState.IDLE;
-                }
-                break;
-            case STARTLIFT2:
-                if (dropTimer.milliseconds()>250){//350
-                    robot.lift.setLiftPos(Lift.LiftLevel.SPECIMENHIGH.getValue());
-                    robot.lift.isPlacing = true;
-
-                    driveState = DriveState.STARTPLACE2;
-
-                }
-                break;
-            case STARTPLACE2:
-                if (dropTimer.milliseconds()>250){//400
-                    robot.arm.armPlace();
-                    robot.intake.wristTransfer();
-                    if (isBlue) {
-                        robot.controller.moveToPoint(new Vector2D(3.5+((specimenCount-2)*5.25),-29.5), Math.toRadians(270));//4, 5.25
-                    } else {
-                        robot.controller.moveToPoint(new Vector2D(-3.5-((specimenCount-2)*5.25),29.5), Math.toRadians(90));
-                    }
-                    //noMoveCycles=0;
-                    driveState = DriveState.TRAJECTORY_1;
-                }
-                break;
-            case PARK:
-
-                if (isBlue) {
-                    robot.controller.moveToPointPrecise(new Vector2D(-35.25, -61.75), Math.toRadians(270));
-                } else {
-                    robot.controller.moveToPointPrecise(new Vector2D(35.25, 61.75), Math.toRadians(90));
-                }
-                break;
-
-
-        }
-    }
-
     public void specimen(){
         //  robot.controller.update(robot.getOrientation());
         switch(driveState){
@@ -2579,12 +1849,12 @@ if (path== Path.SPECIMEN) {
 
                     //  driveState = DriveState.DROP;
                     // }
-                    specimenCount++;
-                    if (specimenCount==1) {
+                    shotCount++;
+                    if (shotCount ==1) {
 
                         driveState = DriveState.GOTOBLOCKS;
                     } else {
-                        if (specimenCount<samples) {
+                        if (shotCount <shots) {
                             //robot.arm.armPickup();
 
                             driveState = DriveState.ALIGN;
@@ -2973,10 +2243,10 @@ if (path== Path.SPECIMEN) {
                       // if (specimenCount>3 ){
                         //   robot.controller.moveToPoint(new Vector2D(2.5 - ((specimenCount - 2) * 2.5), -32), Math.toRadians(270));
                        //} else {
-                           robot.controller.moveToPointRam(new Vector2D(2.5 - ((specimenCount - 2) * 2.5), -32), Math.toRadians(270));//1.5//28.5//3.5, 5.25,29.5 //state was 29.5
+                           robot.controller.moveToPointRam(new Vector2D(2.5 - ((shotCount - 2) * 2.5), -32), Math.toRadians(270));//1.5//28.5//3.5, 5.25,29.5 //state was 29.5
                       // }
                        } else {
-                        robot.controller.moveToPointRam(new Vector2D(-2.5 + ((specimenCount-2)*2.5),32 ), Math.toRadians(90));//-1.5
+                        robot.controller.moveToPointRam(new Vector2D(-2.5 + ((shotCount -2)*2.5),32 ), Math.toRadians(90));//-1.5
                     }
                     robot.arm.armPlace();
                     driveState = DriveState.STARTPLACE2;
@@ -3084,12 +2354,12 @@ if (path== Path.SPECIMEN) {
 
                     //  driveState = DriveState.DROP;
                     // }
-                    specimenCount++;
-                    if (specimenCount==1) {
+                    shotCount++;
+                    if (shotCount ==1) {
 
                         driveState = DriveState.GOTOBLOCKS;
                     } else {
-                        if (specimenCount==2||specimenCount==3) {
+                        if (shotCount ==2|| shotCount ==3) {
                             driveState = DriveState.ALIGN;
                         } else {
                             robot.arm.armPreBasket();
@@ -3444,9 +2714,9 @@ if (path== Path.SPECIMEN) {
                     robot.arm.armPlace();
                     robot.intake.wristTransfer();
                     if (isBlue) {
-                        robot.controller.moveToPoint(new Vector2D(3.5+((specimenCount-2)*5.25),-29.5), Math.toRadians(270));//4, 5.25
+                        robot.controller.moveToPoint(new Vector2D(3.5+((shotCount -2)*5.25),-29.5), Math.toRadians(270));//4, 5.25
                     } else {
-                        robot.controller.moveToPoint(new Vector2D(-3.5-((specimenCount-2)*5.25),29.5), Math.toRadians(90));
+                        robot.controller.moveToPoint(new Vector2D(-3.5-((shotCount -2)*5.25),29.5), Math.toRadians(90));
                     }
                     //noMoveCycles=0;
                     driveState = DriveState.TRAJECTORY_1;
@@ -3472,7 +2742,7 @@ if (path== Path.SPECIMEN) {
             case DROP_1:
                // robot.lift.liftLevel(1);
                 robot.lift.liftAuto();
-                dropState = DropState.DROP_2;
+                dropState = ShootState.DROP_2;
                 dropTimer.reset();
 
                 break;
@@ -3481,48 +2751,15 @@ if (path== Path.SPECIMEN) {
          //       robot.intake.extendBasic();
          //       robot.wrist.wristOut();
                 dropTimer.reset();
-                dropState = DropState.PLACE_1;
-                }
-                break;
-          /*  case DROP_3:
-                if (dropTimer.milliseconds()>500){
-                    robot.wrist.openDropper();
-                    dropTimer.reset();
-                    dropState=DropState.DROP_4;
-                }
-                break;
-            case DROP_4:
-                if (dropTimer.milliseconds()>500){
-                    robot.lift.extendMin();
-                    if (placeState == PlaceState.DROPPING) {
-                    robot.intake.intakeOn();}
-                    dropTimer.reset();
-                    dropState=DropState.DROP_5;
-                }
-                break;
-            case DROP_5:
-                if (dropTimer.milliseconds()>500) {
-                    robot.intake.intakeOff();
-                    robot.lift.liftLevel(0);
-                    dropTimer.reset();
-                    dropState = DropState.DROP_6;
-                }
-                break;
-            case DROP_6:
-                if (dropTimer.milliseconds()>500) {
-                    robot.lift.liftOff();
-                    robot.wrist.closeDropper();
-                    dropTimer.reset();
-                    dropState = DropState.IDLE;
+                dropState = ShootState.PLACE_1;
                 }
                 break;
 
-           */
             case DROP_NO_PIXEL:
                 // robot.lift.liftLevel(1);
                 robot.lift.liftAuto();
-                dropState = DropState.DROP_NO2;
-                dropCounter=1;
+                dropState = ShootState.DROP_NO2;
+                shootCounter =1;
                 dropTimer.reset();
 
                 break;
@@ -3531,20 +2768,20 @@ if (path== Path.SPECIMEN) {
       //              robot.intake.extendBasic();
       //              robot.wrist.wristOut();
                     dropTimer.reset();
-                    dropState = DropState.PLACE_1;
+                    dropState = ShootState.PLACE_1;
                 }
                 break;
             case PLACE_AGAIN:
                 robot.lift.liftAuto();
                 dropTimer.reset();
-                dropState= DropState.PLACE_1;
+                dropState= ShootState.PLACE_1;
                 break;
             case PLACE_1:
                 if (dropTimer.milliseconds()>300){
                //     robot.wrist.turnerAuto(robot.getOrientation());
                     //robot.wrist.placePixel();
                     dropTimer.reset();
-                    dropState= DropState.SENSOR_DISTANCE;
+                    dropState= ShootState.SENSOR_DISTANCE;
                 }
 
                 break;
@@ -3563,7 +2800,7 @@ if (path== Path.SPECIMEN) {
                 //    System.out.println("14423 done extendo "+robot.lift.extendoPosition);
                 //    System.out.println("14423 done servo "+robot.lift.extendo.getPosition());
                   //  robot.lift.extendoPosition += 0.3;
-                  dropState= DropState.PLACE_2;
+                  dropState= ShootState.PLACE_2;
                 }
 
                 break;
@@ -3573,18 +2810,18 @@ if (path== Path.SPECIMEN) {
                     //robot.wrist.placePixel();
 
 
-                    if(dropCounter > 0){
+                    if(shootCounter > 0){
 
             //            robot.wrist.openDropper();
                         dropTimer.reset();
-                        dropState = DropState.PLACE_3;
+                        dropState = ShootState.PLACE_3;
                     }
                     else{
 
               //          robot.wrist.oneDropper();
                     //    System.out.println("14423 oneDropper");
                         dropTimer.reset();
-                        dropState= DropState.LIFTOUT;
+                        dropState= ShootState.LIFTOUT;
                     }
                 }
                 break;
@@ -3595,7 +2832,7 @@ if (path== Path.SPECIMEN) {
 
                  //   robot.wrist.turnerAuto(robot.getOrientation());
 
-                    dropState= DropState.RETRACT;
+                    dropState= ShootState.RETRACT;
                     dropTimer.reset();
                 }
                 break;
@@ -3607,9 +2844,9 @@ if (path== Path.SPECIMEN) {
                   // robot.lift.extendTOBoard(robot.getProx());
                     robot.lift.liftLevel(2);
         //            robot.lift.returnFast();
-                    dropState= DropState.DROP_RETRACT;
+                    dropState= ShootState.DROP_RETRACT;
                     dropTimer.reset();
-                    dropCounter ++;
+                    shootCounter++;
                   //  robot.update();
                 }
                 break;
@@ -3621,7 +2858,7 @@ if (path== Path.SPECIMEN) {
                   //  System.out.println("14423 prox " + prox);
                  //   System.out.println("14423 extendo " + robot.lift.extendo.getPosition());
                     if (prox > 20 || dropTimer.milliseconds() > 1500) {
-                        dropState = DropState.DROP_WAIT;
+                        dropState = ShootState.DROP_WAIT;
                     }
                 }
                 break;
@@ -3637,7 +2874,7 @@ if (path== Path.SPECIMEN) {
 
 
                     dropTimer.reset();
-                    dropState= DropState.SOMERETRACT;
+                    dropState= ShootState.SOMERETRACT;
                 }
                 break;
             case SOMERETRACT:
@@ -3649,7 +2886,7 @@ if (path== Path.SPECIMEN) {
 
                     dropTimer.reset();
                     //dropState= DropState.SOMERETRACT;
-                    dropState= DropState.TURNRETURN;
+                    dropState= ShootState.TURNRETURN;
                 }
 
                 break;
@@ -3657,7 +2894,7 @@ if (path== Path.SPECIMEN) {
                 if(dropTimer.milliseconds() > 300){
        //             robot.wrist.turnerReturn();
                     dropTimer.reset();
-                    dropState= DropState.PLACE_4;
+                    dropState= ShootState.PLACE_4;
                 }
                 break;
             case PLACE_4:
@@ -3666,7 +2903,7 @@ if (path== Path.SPECIMEN) {
        //             robot.lift.extendMin();
                     //robot.wrist.pickUp();
                     dropTimer.reset();
-                    dropState= DropState.WRISTIN;
+                    dropState= ShootState.WRISTIN;
                 }
                 break;
             case WRISTIN:
@@ -3675,33 +2912,33 @@ if (path== Path.SPECIMEN) {
        //             robot.wrist.wristIn();
                     //robot.wrist.pickUp();
                     dropTimer.reset();
-                    dropState= DropState.PLACE_5;
+                    dropState= ShootState.PLACE_5;
                 }
                 break;
             case PLACE_5:
                 if (dropTimer.milliseconds()>500){
                     robot.lift.setLiftPos(0);
 
-                    dropState= DropState.IDLE;
+                    dropState= ShootState.IDLE;
                 }
                 break;
             case INTAKE_OUT:
        //         robot.intake.fourBarOut();
                 dropTimer.reset();
-                dropState = DropState.SPIT;
+                dropState = ShootState.SPIT;
                 break;
             case SPIT:
                 if(dropTimer.milliseconds() > 1000){
                     robot.intake.intakeSpit();
                     dropTimer.reset();
-                    dropState = DropState.INTAKE_IN;
+                    dropState = ShootState.INTAKE_IN;
                 }
                 break;
             case INTAKE_IN:
                 if(dropTimer.milliseconds() > 2000){
 
                     robot.intake.intakeOff();
-                    dropState = DropState.IDLE;
+                    dropState = ShootState.IDLE;
                 }
             case IDLE:
                 break;
@@ -3726,6 +2963,7 @@ public void updatePoseUltrasonic(){
 
 
     }
+    //we leave this in in case we ever want to manually drive in auto
    /* public void drive(){
         robot.controller.updateLocalizer(robot.getOrientation());
         Vector2D gamepadVector = new Vector2D(gamepad1.left_stick_x, -gamepad1.left_stick_y);
