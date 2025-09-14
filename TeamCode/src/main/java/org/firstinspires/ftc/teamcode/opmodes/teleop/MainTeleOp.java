@@ -118,6 +118,7 @@ double prox=30;
        // robot.webcam.cameraClose();
        // robot.frontcam.setPixelPipeline();
         buttonTable=setupCheckButtons();
+        //switch to pipeline for proper shooting tags
         if (Data.getBlue()){
             robot.limelight.pipelineSwitch(1);
             isBlue=1;
@@ -168,9 +169,8 @@ double prox=30;
             robot.controller.getController().updateCombinedLocalizer();;
             robot.controller.getController().initzeroPower(Math.toRadians(0));
             robot.controller.getController().setIsAuto(false);
-            robot.arm.armPreBasket();
-            robot.intake.wristTransfer();
-            robot.lift.liftFullDown();
+           //put robot "init" items here - they can only run when we hit start
+
             liftTimer.startTime();
             dropTimer.startTime();
         }
@@ -203,12 +203,16 @@ double prox=30;
 
             checkButtons();
            // prox=robot.getProx();
-           lift();
-       //     wrist();
+           //here we call our various subsytem machines that we want to run in parallel
+
             drive();
+            /*
+            lift();
             claw();
             arm();
             intake();
+
+             */
            ledstate();
         //    dropperstate();
 
@@ -252,8 +256,10 @@ double prox=30;
             //telemetry.addData("imu",robot.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
             //telemetry.update();
         }
+        //and that's it for the loop - all other work is done in the subsystem machine calls
 
-    //code that manages the drive machine
+
+    //code that manages the drive machine -leave mostly untouched
     public void drive(){
    //   robot.controller.getController().updateLocalizer(robot.getOrientation());
         //force driving straight with joystick TODO:change deadbands?
@@ -357,43 +363,6 @@ double prox=30;
     }
 
     public void intake(){
-
-
-/*
-            switch (ledState) {
-                case EMPTY:
-                    robot.intake.isIntakeSensor=false;
-                    ledTimer.reset();
-                    ledState= LEDStates.ONE;
-                    currentGamepad1.rumbleBlips(1);
-                    break;
-                case ONE:
-                    if (ledTimer.milliseconds()>500) {
-                    robot.intake.isIntakeSensor=false;
-                    currentGamepad1.rumbleBlips(2);
-                    ledTimer.reset();
-                    ledState= LEDStates.TWO;}
-                    break;
-                // robot.intake.intakeOff();
-                // robot.intake.fourBarDrive();
-                //  robot.wrist.closeDropper();
-                //  openState=OpenStates.FULL;
-                case TWO://TODO will need to debug for bounceback
-                    if (ledTimer.milliseconds()>500) {
-                        robot.intake.isIntakeSensor = false;
-                        // robot.intake.intakeOff();
-                        // robot.intake.fourBarDrive();
-                        //    robot.wrist.closeDropper();
-                        currentGamepad1.rumbleBlips(2);
-                        ledState = LEDStates.CHECK;
-                    }
-                    break;
-
-
-            }
-
-    }
- */
 
         if(currentGamepad1.left_trigger > .75){
             robot.intake.extendoInFast();
@@ -533,32 +502,7 @@ double prox=30;
             }
         }
 
-        /*
-            if (currentGamepad1.dpad_up && !buttonTable.get("g1du")){
-            buttonTable.put("g1du", true);
-            robot.intake.fourBarRaise();
-        }
 
-        if(currentGamepad2.dpad_right && !buttonTable.get("g2dr")){
-            buttonTable.put("g2dr", true);
-            robot.intake.extendoOut();
-        }
-        if(currentGamepad2.dpad_left && !buttonTable.get("g2dl")){
-            buttonTable.put("g2dl", true);
-            robot.intake.extendIn();
-        }
-
-
-
-         */
-       /* if(currentGamepad1.left_bumper&& !buttonTable.get("g1lb")){
-            buttonTable.put("g1lb", true);
-            robot.intake.fourBarIn();
-            robot.intake.intakeOff();
-            robot.wrist.closeDropper();
-            //robot.lift.liftLevel(1);
-            dropTimer.reset();
-        }*/
     }
 
 
@@ -580,31 +524,6 @@ double prox=30;
             buttonTable.put("g1dl", true);
             robot.arm.openClaw();
         }
-        /*
-        if(currentGamepad2.right_trigger > 0.5){
-           robot.arm.closeClaw();
-         //   robot.lift.extendFull();
-        }
-        else if(currentGamepad2.left_trigger > 0.5){
-            robot.arm.openClaw();
-
-        }
-
-
-         */
-
-
-
-        /*if(currentGamepad2.right_bumper && !buttonTable.get("g2rb")){
-            buttonTable.put("g2rb", true);
-            //robot.wrist.rotateRight();
-            robot.intake.setFourBarPos(robot.intake.intakeBar.getCurrentPosition()+15);
-        }
-        if(currentGamepad2.left_bumper && !buttonTable.get("g2lb")){
-            buttonTable.put("g2lb", true);
-           // robot.wrist.rotateLeft();
-            robot.intake.setFourBarPos(robot.intake.intakeBar.getCurrentPosition()-15);
-        } */
 
         if(currentGamepad2.a && !buttonTable.get("g2a")){
             buttonTable.put("g2a", true);
@@ -622,18 +541,7 @@ double prox=30;
                 //decide whether to do something else on 2.a
                  }
         }
-/*
-        if(currentGamepad2.b && !buttonTable.get("g2b")) {
-            buttonTable.put("g2b", true);
-            //manually transfer.
-            // TODO add start transfer when touch sensor activated
-            //TODO break up transfer for more manual control
-            transferState = TransferStates.STARTTRANSFER;
 
-        }
-
-
- */
         if(currentGamepad1.left_bumper && !buttonTable.get("g1lb")) {
             buttonTable.put("g1lb", true);
             //manually transfer.
@@ -652,25 +560,6 @@ double prox=30;
             transferState= TransferStates.STARTPICKUP; }
             //TODO assign 1.y
         }
-           /* OLD RESET CODE
-           if (currentGamepad2.right_trigger>.5) {
-                transferState = TransferStates.OPEN;
-                openTimer.reset();
-            } else
-
-
-
-            if (transferState == TransferStates.PLACEWAIT) {
-                transferState = TransferStates.PICKUP;
-                openTimer.reset();
-            } else
-            if (transferState == TransferStates.DONE || transferState == TransferStates.FINISHPLACE){
-                transferState = TransferStates.OPEN;
-                openTimer.reset();
-            }
-            dropTimer.reset();
-
-            */
 
     }
     public void arm(){
@@ -685,18 +574,6 @@ if (Math.abs(gamepad2.right_stick_x)>0) {
 
     }
 }
-/*
-        if (Math.abs(gamepad2.right_stick_y)>0) {
-            if (gamepad2.right_stick_y < 0.9) {
-                robot.arm.clawWristIn();
-                //   robot.lift.extendFull();
-            } else if (gamepad2.right_stick_y > 0.9) {
-                robot.arm.clawWristOut();
-
-            }
-        }
-
- */
 
         switch (driveState){
             case IDLE:
@@ -1175,7 +1052,7 @@ if (Math.abs(gamepad2.right_stick_x)>0) {
 
         }
     }
-
+//LED state will stay, but be adjusted for new states
     public void ledstate(){
       ledOn=true;//TODO choose different button to toggle LEDs
         /*  if (currentGamepad1.dpad_down && !buttonTable.get("g1dd")){
