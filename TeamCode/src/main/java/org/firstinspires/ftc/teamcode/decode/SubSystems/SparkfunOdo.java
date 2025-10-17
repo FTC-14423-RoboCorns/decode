@@ -3,59 +3,58 @@ package org.firstinspires.ftc.teamcode.decode.SubSystems;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 @Config
 public class SparkfunOdo {
-    //TODO: Set Offset
-    private static double XOFF=0;
-    private static double YOFF=6;
-    private static double HOFF=Math.toRadians(0);
-    private static double LINSCALE=1.1;
-    private static double ANGLESCALE=1.0;
-    public SparkFunOTOS localizer;
-    private SparkFunOTOS.Pose2D pose=new SparkFunOTOS.Pose2D(0,0,Math.toRadians(0));
 
-    public void init(HardwareMap hardwareMap){
+    //TODO: Set Offset
+    private static double XOFF = 0;
+    private static double YOFF = 6;
+    private static double HOFF = Math.toRadians(0);
+    private static double LINSCALE = 1.1;
+    private static double ANGLESCALE = 1.0;
+    public SparkFunOTOS localizer;
+    private SparkFunOTOS.Pose2D pose = new SparkFunOTOS.Pose2D(0, 0, Math.toRadians(0));
+
+    public void init(HardwareMap hardwareMap) {
         localizer = hardwareMap.get(SparkFunOTOS.class, "odopod");
 
         // All the configuration for the OTOS is done in this helper method, check it out!
-       configureOtos(); //for competition only configure once, in Auto, to see if it saves position
-       // setpose(0,0,0);
+        configureOtos(); //for competition only configure once, in Auto, to see if it saves position
+        // setpose(0,0,0);
     }
 
-    public void readPose(){
-        pose=localizer.getPosition();
+    public void readPose() {
+        pose = localizer.getPosition();
     }
-    public SparkFunOTOS.Pose2D getPose(){
+
+    public SparkFunOTOS.Pose2D getPose() {
         return pose;
     }
-    public void setpose(double x, double y, double h){
-        SparkFunOTOS.Pose2D currentPosition = new SparkFunOTOS.Pose2D(x,y,h);
-        localizer.setPosition(currentPosition);
 
+    public void setpose(double x, double y, double h) {
+        SparkFunOTOS.Pose2D currentPosition = new SparkFunOTOS.Pose2D(x, y, h);
+        localizer.setPosition(currentPosition);
     }
 
-    public void calibrateIMU(){
+    public void calibrateIMU() {
         localizer.calibrateImu();
     }
 
-    public void resetTracking(){
+    public void resetTracking() {
         localizer.resetTracking();
 
         // After resetting the tracking, the OTOS will report that the robot is at
         // the origin. If your robot does not start at the origin, or you have
         // another source of location information (eg. vision odometry), you can set
         // the OTOS location to match and it will continue to track from there.
-        SparkFunOTOS.Pose2D currentPosition = new SparkFunOTOS.Pose2D(XOFF,YOFF,HOFF);
+        SparkFunOTOS.Pose2D currentPosition = new SparkFunOTOS.Pose2D(XOFF, YOFF, HOFF);
         localizer.setPosition(currentPosition);
-
     }
 
     public void configureOtos() {
-
         // Set the desired units for linear and angular measurements. Can be either
         // meters or inches for linear, and radians or degrees for angular. If not
         // set, the default is inches and degrees. Note that this setting is not
@@ -63,7 +62,7 @@ public class SparkfunOdo {
         // OpModes if using the non-default value.
         // myOtos.setLinearUnit(DistanceUnit.METER);
         localizer.setLinearUnit(DistanceUnit.INCH);
-         localizer.setAngularUnit(AngleUnit.RADIANS);
+        localizer.setAngularUnit(AngleUnit.RADIANS);
         //myOtos.setAngularUnit(AngleUnit.DEGREES);
 
         // Assuming you've mounted your sensor to a robot and it's not centered,
@@ -79,7 +78,7 @@ public class SparkfunOdo {
         // tweaked slightly to compensate for imperfect mounting (eg. 1.3 degrees).
         SparkFunOTOS.Pose2D offset = new SparkFunOTOS.Pose2D(XOFF, YOFF, HOFF);
         localizer.setOffset(offset);
-       // setpose(XOFF, YOFF, HOFF);
+        // setpose(XOFF, YOFF, HOFF);
         // Here we can set the linear and angular scalars, which can compensate for
         // scaling issues with the sensor measurements. Note that as of firmware
         // version 1.0, these values will be lost after a power cycle, so you will
@@ -109,7 +108,7 @@ public class SparkfunOdo {
         // to wait until the calibration is complete. If no parameters are provided,
         // it will take 255 samples and wait until done; each sample takes about
         // 2.4ms, so about 612ms total
-       // myOtos.calibrateImu();
+        // myOtos.calibrateImu();
         calibrateIMU();
 
         // Reset the tracking algorithm - this resets the position to the origin,
@@ -117,14 +116,10 @@ public class SparkfunOdo {
         resetTracking();
 
         // Get the hardware and firmware version
-      /*  SparkFunOTOS.Version hwVersion = new SparkFunOTOS.Version();
+        /*  SparkFunOTOS.Version hwVersion = new SparkFunOTOS.Version();
         SparkFunOTOS.Version fwVersion = new SparkFunOTOS.Version();
         myOtos.getVersionInfo(hwVersion, fwVersion);
 
        */
-
-
     }
-
-    }
-
+}

@@ -120,15 +120,14 @@ public class PIDFController {
      * @return Whether the error is within the acceptable bounds.
      */
     public boolean atSetPoint() {
-        return Math.abs(errorVal_p) < errorTolerance_p
-                && Math.abs(errorVal_v) < errorTolerance_v;
+        return Math.abs(errorVal_p) < errorTolerance_p && Math.abs(errorVal_v) < errorTolerance_v;
     }
 
     /**
      * @return the PIDF coefficients
      */
     public double[] getCoefficients() {
-        return new double[]{kP, kI, kD, kF};
+        return new double[] { kP, kI, kD, kF };
     }
 
     /**
@@ -142,7 +141,7 @@ public class PIDFController {
      * @return the tolerances of the controller
      */
     public double[] getTolerance() {
-        return new double[]{errorTolerance_p, errorTolerance_v};
+        return new double[] { errorTolerance_p, errorTolerance_v };
     }
 
     /**
@@ -191,7 +190,7 @@ public class PIDFController {
         lastTimeStamp = currentTimeStamp;
 
         if (measuredValue == pv) {
-           // errorVal_p = setPoint - measuredValue;
+            // errorVal_p = setPoint - measuredValue;
             errorVal_p = setPoint - measuredValue;
         } else {
             //errorVal_p = setPoint - pv;
@@ -267,5 +266,4 @@ public class PIDFController {
     public double getPeriod() {
         return period;
     }
-
 }

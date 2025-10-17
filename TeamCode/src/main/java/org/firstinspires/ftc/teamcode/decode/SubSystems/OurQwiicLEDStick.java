@@ -1,10 +1,8 @@
 package org.firstinspires.ftc.teamcode.decode.SubSystems;
 
 import android.graphics.Color;
-
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
-
 import com.qualcomm.robotcore.hardware.I2cAddr;
 import com.qualcomm.robotcore.hardware.I2cDeviceSynchDevice;
 import com.qualcomm.robotcore.hardware.I2cDeviceSynchSimple;
@@ -12,8 +10,12 @@ import com.qualcomm.robotcore.hardware.I2cWaitControl;
 import com.qualcomm.robotcore.hardware.configuration.annotations.DeviceProperties;
 import com.qualcomm.robotcore.hardware.configuration.annotations.I2cDeviceType;
 
-@I2cDeviceType()
-@DeviceProperties(name = "OUR_QWIIC LED Stick", description = "Sparkfun QWIIC LED Stick", xmlTag = "OUR_QWIIC_LED_STICK")
+@I2cDeviceType
+@DeviceProperties(
+    name = "OUR_QWIIC LED Stick",
+    description = "Sparkfun QWIIC LED Stick",
+    xmlTag = "OUR_QWIIC_LED_STICK"
+)
 public class OurQwiicLEDStick extends I2cDeviceSynchDevice<I2cDeviceSynchSimple> {
 
     private enum Commands {
@@ -26,6 +28,7 @@ public class OurQwiicLEDStick extends I2cDeviceSynchDevice<I2cDeviceSynchSimple>
         WRITE_SINGLE_LED_BRIGHTNESS(0x76),
         WRITE_ALL_LED_BRIGHTNESS(0x77),
         WRITE_ALL_LED_OFF(0x78);
+
         int bVal;
 
         Commands(int bVal) {
@@ -60,6 +63,7 @@ public class OurQwiicLEDStick extends I2cDeviceSynchDevice<I2cDeviceSynchSimple>
         data[2] = (byte) Color.blue(color);
         writeI2C(Commands.WRITE_ALL_LED_COLOR, data);
     }
+
     /**
      * Send a segment of the LED array
      *
@@ -159,12 +163,9 @@ public class OurQwiicLEDStick extends I2cDeviceSynchDevice<I2cDeviceSynchSimple>
         writeI2C(Commands.CHANGE_LED_LENGTH, data);
     }
 
-
     private void writeI2C(Commands cmd, byte[] data) {
-        deviceClient.write(cmd.bVal, data, I2cWaitControl.NONE);//WRITTEN
-
+        deviceClient.write(cmd.bVal, data, I2cWaitControl.NONE); //WRITTEN
     }
-
 
     @Override
     public Manufacturer getManufacturer() {
@@ -181,13 +182,11 @@ public class OurQwiicLEDStick extends I2cDeviceSynchDevice<I2cDeviceSynchSimple>
         return "Qwiic LED Strip";
     }
 
-    private final static I2cAddr ADDRESS_I2C_DEFAULT = I2cAddr.create7bit(0x23);
+    private static final I2cAddr ADDRESS_I2C_DEFAULT = I2cAddr.create7bit(0x23);
 
     public OurQwiicLEDStick(I2cDeviceSynchSimple deviceClient, boolean deviceClientIsOwned) {
         super(deviceClient, deviceClientIsOwned);
-
         this.deviceClient.setI2cAddress(ADDRESS_I2C_DEFAULT);
         super.registerArmingStateCallback(false);
     }
-
 }

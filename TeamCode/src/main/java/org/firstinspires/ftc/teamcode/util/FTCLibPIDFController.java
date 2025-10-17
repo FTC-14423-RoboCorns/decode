@@ -106,14 +106,14 @@ public class FTCLibPIDFController {
      *
      * @param sp The desired setpoint.
      */
-    public static double AngleDifference( double angle1, double angle2 )
-    {
-        double diff = ( angle2 - angle1 + Math.PI ) % (2*Math.PI) - Math.PI;
-        return diff < -Math.PI ? diff + (2*Math.PI) : diff;
+    public static double AngleDifference(double angle1, double angle2) {
+        double diff = ((angle2 - angle1 + Math.PI) % (2 * Math.PI)) - Math.PI;
+        return diff < -Math.PI ? diff + (2 * Math.PI) : diff;
     }
+
     public void setSetPoint(double sp) {
         setPoint = sp;
-        errorVal_p = AngleDifference(setPoint ,measuredValue);
+        errorVal_p = AngleDifference(setPoint, measuredValue);
         errorVal_v = (errorVal_p - prevErrorVal) / period;
     }
 
@@ -124,15 +124,14 @@ public class FTCLibPIDFController {
      * @return Whether the error is within the acceptable bounds.
      */
     public boolean atSetPoint() {
-        return Math.abs(errorVal_p) < errorTolerance_p
-                && Math.abs(errorVal_v) < errorTolerance_v;
+        return Math.abs(errorVal_p) < errorTolerance_p && Math.abs(errorVal_v) < errorTolerance_v;
     }
 
     /**
      * @return the PIDF coefficients
      */
     public double[] getCoefficients() {
-        return new double[]{kP, kI, kD, kF};
+        return new double[] { kP, kI, kD, kF };
     }
 
     /**
@@ -146,7 +145,7 @@ public class FTCLibPIDFController {
      * @return the tolerances of the controller
      */
     public double[] getTolerance() {
-        return new double[]{errorTolerance_p, errorTolerance_v};
+        return new double[] { errorTolerance_p, errorTolerance_v };
     }
 
     /**
@@ -195,11 +194,11 @@ public class FTCLibPIDFController {
         lastTimeStamp = currentTimeStamp;
 
         if (measuredValue == pv) {
-           // errorVal_p = setPoint - measuredValue;
-            errorVal_p = AngleDifference(setPoint , measuredValue);
+            // errorVal_p = setPoint - measuredValue;
+            errorVal_p = AngleDifference(setPoint, measuredValue);
         } else {
             //errorVal_p = setPoint - pv;
-            errorVal_p = AngleDifference(setPoint , pv);
+            errorVal_p = AngleDifference(setPoint, pv);
             measuredValue = pv;
         }
 
@@ -271,5 +270,4 @@ public class FTCLibPIDFController {
     public double getPeriod() {
         return period;
     }
-
 }
