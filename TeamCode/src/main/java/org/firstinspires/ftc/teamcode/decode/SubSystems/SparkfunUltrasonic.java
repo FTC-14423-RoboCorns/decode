@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.decode.SubSystems;
 
-
-
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.I2cAddr;
 import com.qualcomm.robotcore.hardware.I2cDeviceSynch;
@@ -11,13 +9,16 @@ import com.qualcomm.robotcore.hardware.configuration.annotations.DevicePropertie
 import com.qualcomm.robotcore.hardware.configuration.annotations.I2cDeviceType;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.TypeConversion;
+
 @Config
-@I2cDeviceType()
+@I2cDeviceType
 @DeviceProperties(name = "Sparkfun Ultrasonic", description = "Sparkfun Ultrasonic", xmlTag = "SPARKFUN_ULTRASONIC")
 public class SparkfunUltrasonic extends I2cDeviceSynchDevice<I2cDeviceSynch> {
-    private ElapsedTime ultrasonicTimer=new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
-    private double dist=0;
-    public static double WAIT=25;
+
+    private ElapsedTime ultrasonicTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
+    private double dist = 0;
+    public static double WAIT = 25;
+
     /*
 // Available I2C addresses of the Qwiic Ultrasonic
 const uint8_t kQwiicUltrasonicDefaultAddress = 0x2F;
@@ -61,35 +62,32 @@ const uint8_t kQwiicUltrasonicMaxAddress = 0x2F;
         writeI2C(Commands.ADDRESS_CHANGE_COMMAND, address);
     }
 
-
     public double readDistance() {
         int bytesRead;
         int numBytes = 2;
         byte[] rawData = new byte[2];
-        if (ultrasonicTimer.milliseconds()>WAIT) {
+        if (ultrasonicTimer.milliseconds() > WAIT) {
             rawData = readI2C(Commands.READ_COMMAND, numBytes);
-         //   System.out.println("RD0 " + rawData[0]);
-          //  System.out.println("RD1 " + rawData[1]);
+            //   System.out.println("RD0 " + rawData[0]);
+            //  System.out.println("RD1 " + rawData[1]);
             dist = ((rawData[0] & 0xFF) << 8) | (rawData[1] & 0xFF);
-          //  System.out.println("dist " + dist);
+            //  System.out.println("dist " + dist);
             ultrasonicTimer.reset();
         }
-        return  convertMmToInches(dist);
-     //   return convertMmToInches(readShort(Commands.READ_COMMAND));
+        return convertMmToInches(dist);
+        //   return convertMmToInches(readShort(Commands.READ_COMMAND));
     }
 
-    private double convertMmToInches(double mm) { return mm / 25.4; }
-
-
+    private double convertMmToInches(double mm) {
+        return mm / 25.4;
+    }
 
     private void writeI2C(Commands cmd, byte[] data) {
-        deviceClient.write(cmd.bVal, data, I2cWaitControl.WRITTEN);//WRITTEN
-
-
+        deviceClient.write(cmd.bVal, data, I2cWaitControl.WRITTEN); //WRITTEN
     }
 
-    private byte[] readI2C(Commands cmd, int len){
-        return deviceClient.read(cmd.bVal,len);
+    private byte[] readI2C(Commands cmd, int len) {
+        return deviceClient.read(cmd.bVal, len);
     }
 
     /* protected void writeShort(final Register reg, short value)
@@ -99,11 +97,9 @@ const uint8_t kQwiicUltrasonicMaxAddress = 0x2F;
 
      */
 
-    protected short readShort(Commands cmd)
-    {
+    protected short readShort(Commands cmd) {
         return TypeConversion.byteArrayToShort(deviceClient.read(cmd.bVal, 2));
     }
-
 
     @Override
     public Manufacturer getManufacturer() {
@@ -121,21 +117,20 @@ const uint8_t kQwiicUltrasonicMaxAddress = 0x2F;
         return "Sparkfun Ultrasonic Sensor";
     }
 
-    private final static I2cAddr ADDRESS_I2C_DEFAULT = I2cAddr.create7bit(0x2F);
-    private final static I2cAddr ADDRESS_I2C_NEW1 = I2cAddr.create7bit(0x08);
-    private final static I2cAddr ADDRESS_I2C_NEW2 = I2cAddr.create7bit(0x09);
+    private static final I2cAddr ADDRESS_I2C_DEFAULT = I2cAddr.create7bit(0x2F);
+    private static final I2cAddr ADDRESS_I2C_NEW1 = I2cAddr.create7bit(0x08);
+    private static final I2cAddr ADDRESS_I2C_NEW2 = I2cAddr.create7bit(0x09);
 
-    protected void setOptimalReadWindow()
-    {
+    protected void setOptimalReadWindow() {
         // Sensor registers are read repeatedly and stored in a register. This method specifies the
         // registers and repeat read mode
         I2cDeviceSynch.ReadWindow readWindow = new I2cDeviceSynch.ReadWindow(
-                Commands.READ_COMMAND.bVal,
-                2,
-                I2cDeviceSynch.ReadMode.REPEAT);
+            Commands.READ_COMMAND.bVal,
+            2,
+            I2cDeviceSynch.ReadMode.REPEAT
+        );
         deviceClient.setReadWindow(readWindow);
     }
-
 
     public SparkfunUltrasonic(I2cDeviceSynch deviceClient, boolean deviceClientIsOwned) {
         super(deviceClient, deviceClientIsOwned);
@@ -146,5 +141,4 @@ const uint8_t kQwiicUltrasonicMaxAddress = 0x2F;
         super.registerArmingStateCallback(false);
         this.deviceClient.engage();
     }
-
 }

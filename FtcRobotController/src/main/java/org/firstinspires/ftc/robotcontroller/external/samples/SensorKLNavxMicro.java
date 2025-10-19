@@ -66,11 +66,12 @@ public class SensorKLNavxMicro extends LinearOpMode {
     // A timer helps provide feedback while calibration is taking place
     ElapsedTime timer = new ElapsedTime();
 
-    @Override public void runOpMode() throws InterruptedException {
+    @Override
+    public void runOpMode() throws InterruptedException {
         // Get a reference to a Modern Robotics GyroSensor object. We use several interfaces
         // on this object to illustrate which interfaces support which functionality.
         navxMicro = hardwareMap.get(NavxMicroNavigationSensor.class, "navx");
-        gyro = (IntegratingGyroscope)navxMicro;
+        gyro = (IntegratingGyroscope) navxMicro;
         // If you're only interested int the IntegratingGyroscope interface, the following will suffice.
         // gyro = hardwareMap.get(IntegratingGyroscope.class, "navx");
 
@@ -79,32 +80,35 @@ public class SensorKLNavxMicro extends LinearOpMode {
 
         // Wait until the gyro calibration is complete
         timer.reset();
-        while (navxMicro.isCalibrating())  {
-            telemetry.addData("calibrating", "%s", Math.round(timer.seconds())%2==0 ? "|.." : "..|");
+        while (navxMicro.isCalibrating()) {
+            telemetry.addData("calibrating", "%s", Math.round(timer.seconds()) % 2 == 0 ? "|.." : "..|");
             telemetry.update();
             Thread.sleep(50);
         }
-        telemetry.log().clear(); telemetry.log().add("Gyro Calibrated. Press Start.");
-        telemetry.clear(); telemetry.update();
+        telemetry.log().clear();
+        telemetry.log().add("Gyro Calibrated. Press Start.");
+        telemetry.clear();
+        telemetry.update();
 
         // Wait for the start button to be pressed
         waitForStart();
         telemetry.log().clear();
 
         while (opModeIsActive()) {
-
             // Read dimensionalized data from the gyro. This gyro can report angular velocities
             // about all three axes. Additionally, it internally integrates the Z axis to
             // be able to report an absolute angular Z orientation.
             AngularVelocity rates = gyro.getAngularVelocity(AngleUnit.DEGREES);
             Orientation angles = gyro.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
-            telemetry.addLine()
+            telemetry
+                .addLine()
                 .addData("dx", formatRate(rates.xRotationRate))
                 .addData("dy", formatRate(rates.yRotationRate))
                 .addData("dz", "%s deg/s", formatRate(rates.zRotationRate));
 
-            telemetry.addLine()
+            telemetry
+                .addLine()
                 .addData("heading", formatAngle(angles.angleUnit, angles.firstAngle))
                 .addData("roll", formatAngle(angles.angleUnit, angles.secondAngle))
                 .addData("pitch", "%s deg", formatAngle(angles.angleUnit, angles.thirdAngle));
@@ -122,7 +126,7 @@ public class SensorKLNavxMicro extends LinearOpMode {
         return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));
     }
 
-    String formatDegrees(double degrees){
+    String formatDegrees(double degrees) {
         return String.format("%.1f", AngleUnit.DEGREES.normalize(degrees));
     }
 }

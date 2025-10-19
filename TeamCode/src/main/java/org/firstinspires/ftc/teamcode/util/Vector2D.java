@@ -1,25 +1,27 @@
 package org.firstinspires.ftc.teamcode.util;
 
 public class Vector2D {
-    public double x,y;
 
-    public Vector2D(double x, double y){
+    public double x, y;
+
+    public Vector2D(double x, double y) {
         this.x = x;
         this.y = y;
     }
 
-    public void setX(double x){
+    public void setX(double x) {
         this.x = x;
     }
-    public void setY(double y){
+
+    public void setY(double y) {
         this.y = y;
     }
 
-    public static Vector2D fromHeadingAndMagnitude(double h, double m){
+    public static Vector2D fromHeadingAndMagnitude(double h, double m) {
         return new Vector2D(Math.cos(h) * m, Math.sin(h) * m);
     }
 
-    public void add(Vector2D vector){
+    public void add(Vector2D vector) {
         this.x += vector.x;
         this.y += vector.y;
     }
@@ -41,24 +43,20 @@ public class Vector2D {
         return x * other.x + y * other.y;
     }
 
-    public double angle(){
+    public double angle() {
         double angle;
-        if(x != 0 ){
-            angle = Math.atan(y/x);
-        }
-        else if (y>0){
+        if (x != 0) {
+            angle = Math.atan(y / x);
+        } else if (y > 0) {
             angle = Math.toRadians(90);
-        }
-        else{
+        } else {
             angle = Math.toRadians(270);
         }
-        if(x<0 && y<0){
+        if (x < 0 && y < 0) {
             angle += Math.toRadians(180);
-        }
-        else if(y <0){
+        } else if (y < 0) {
             angle += Math.toRadians(360);
-        }
-        else if ( x < 0) {
+        } else if (x < 0) {
             angle += Math.toRadians(180);
         }
         //System.out.println(angle);
@@ -74,9 +72,7 @@ public class Vector2D {
     }
 
     public Vector2D rotate(double angle) {
-        return new Vector2D(
-                x * Math.cos(angle) - y * Math.sin(angle),
-                x * Math.sin(angle) + y * Math.cos(angle));
+        return new Vector2D(x * Math.cos(angle) - y * Math.sin(angle), x * Math.sin(angle) + y * Math.cos(angle));
     }
 
     public double cross(Vector2D other) {

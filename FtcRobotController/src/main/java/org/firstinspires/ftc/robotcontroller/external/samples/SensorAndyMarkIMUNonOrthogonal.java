@@ -29,6 +29,8 @@
 
 package org.firstinspires.ftc.robotcontroller.external.samples;
 
+import static com.qualcomm.hardware.andymark.AndyMarkIMUOrientationOnRobot.xyzOrientation;
+
 import com.qualcomm.hardware.andymark.AndyMarkIMUOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -38,8 +40,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-
-import static com.qualcomm.hardware.andymark.AndyMarkIMUOrientationOnRobot.xyzOrientation;
 
 /*
  * This OpMode shows how to use the AndyMark IMU sensor. It assumes that the AndyMark IMU is
@@ -72,9 +72,9 @@ import static com.qualcomm.hardware.andymark.AndyMarkIMUOrientationOnRobot.xyzOr
  * Finally, edit this OpMode to use at least one angle around an axis to orient your AndyMark IMU.
  */
 @TeleOp(name = "Sensor: AndyMark IMU Non-Orthogonal", group = "Sensor")
-@Disabled     // Comment this out to add to the OpMode list
-public class SensorAndyMarkIMUNonOrthogonal extends LinearOpMode
-{
+@Disabled // Comment this out to add to the OpMode list
+public class SensorAndyMarkIMUNonOrthogonal extends LinearOpMode {
+
     // The AndyMark IMU sensor object
     private IMU imu;
 
@@ -82,8 +82,8 @@ public class SensorAndyMarkIMUNonOrthogonal extends LinearOpMode
     // Main logic
     //----------------------------------------------------------------------------------------------
 
-    @Override public void runOpMode() throws InterruptedException {
-
+    @Override
+    public void runOpMode() throws InterruptedException {
         // Retrieve and initialize the AndyMark IMU.
         // This sample expects the AndyMark IMU to be named "imu".
         imu = hardwareMap.get(IMU.class, "imu");
@@ -155,9 +155,9 @@ public class SensorAndyMarkIMUNonOrthogonal extends LinearOpMode
 
         // The next three lines define the desired axis rotations.
         // To Do: EDIT these values to match YOUR mounting configuration.
-        double xRotation = 0;  // enter the desired X rotation angle here.
-        double yRotation = 0;  // enter the desired Y rotation angle here.
-        double zRotation = 0;  // enter the desired Z rotation angle here.
+        double xRotation = 0; // enter the desired X rotation angle here.
+        double yRotation = 0; // enter the desired Y rotation angle here.
+        double zRotation = 0; // enter the desired Z rotation angle here.
 
         Orientation imuRotation = xyzOrientation(xRotation, yRotation, zRotation);
 

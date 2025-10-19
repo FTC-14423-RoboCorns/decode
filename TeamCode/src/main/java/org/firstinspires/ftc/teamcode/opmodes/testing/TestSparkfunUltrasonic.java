@@ -1,25 +1,22 @@
- package org.firstinspires.ftc.teamcode.opmodes.testing;
-
+package org.firstinspires.ftc.teamcode.opmodes.testing;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-
 import org.firstinspires.ftc.teamcode.decode.SubSystems.*;
 
-@TeleOp()
-
+@TeleOp
 public class TestSparkfunUltrasonic extends OpMode {
+
     public SparkfunUltrasonic rangeSensor;
+
     // Code to run ONCE when the driver hits INIT
     @Override
-    public void init( ) {
+    public void init() {
         rangeSensor = hardwareMap.get(SparkfunUltrasonic.class, "rear");
     }
 
     @Override
-    public void start() {
-
-    }
+    public void start() {}
 
     // Code to run REPEATEDLY after the driver hits PLAY but before they hit STOP
     @Override
@@ -29,11 +26,8 @@ public class TestSparkfunUltrasonic extends OpMode {
         //telemetry.addData("cm optical", "%.2f cm", rangeSensor.cmOptical());
         //telemetry.addData("cm", "%.2f cm", rangeSensor.getDistance(DistanceUnit.CM));
         telemetry.update();
-
     }
 
     @Override
-    public void stop() {
-
-    }
+    public void stop() {}
 }

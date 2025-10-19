@@ -48,7 +48,8 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
  */
 @TeleOp(name = "Concept: Telemetry", group = "Concept")
 @Disabled
-public class ConceptTelemetry extends LinearOpMode  {
+public class ConceptTelemetry extends LinearOpMode {
+
     /** Keeps track of the line of the poem which is to be emitted next */
     int poemLine = 0;
 
@@ -56,7 +57,6 @@ public class ConceptTelemetry extends LinearOpMode  {
     ElapsedTime poemElapsed = new ElapsedTime();
 
     static final String[] poem = new String[] {
-
         "Mary had a little lamb,",
         "His fleece was white as snow,",
         "And everywhere that Mary went,",
@@ -77,11 +77,11 @@ public class ConceptTelemetry extends LinearOpMode  {
         "\"Why, Mary loves the lamb, you know,\"",
         "The teacher did reply.",
         "",
-        ""
+        "",
     };
 
-    @Override public void runOpMode() {
-
+    @Override
+    public void runOpMode() {
         /* we keep track of how long it's been since the OpMode was started, just
          * to have some interesting data to show */
         ElapsedTime opmodeRunTime = new ElapsedTime();
@@ -115,11 +115,16 @@ public class ConceptTelemetry extends LinearOpMode  {
          *
          * @see Telemetry#getMsTransmissionInterval()
          */
-        telemetry.addData("voltage", "%.1f volts", new Func<Double>() {
-            @Override public Double value() {
-                return getBatteryVoltage();
+        telemetry.addData(
+            "voltage",
+            "%.1f volts",
+            new Func<Double>() {
+                @Override
+                public Double value() {
+                    return getBatteryVoltage();
+                }
             }
-            });
+        );
 
         // Reset to keep some timing stats for the post-'start' part of the OpMode
         opmodeRunTime.reset();
@@ -127,7 +132,6 @@ public class ConceptTelemetry extends LinearOpMode  {
 
         // Go go gadget robot!
         while (opModeIsActive()) {
-
             // Emit poetry if it's been a while
             if (poemElapsed.seconds() > sPoemInterval) {
                 emitPoemLine();
@@ -138,12 +142,14 @@ public class ConceptTelemetry extends LinearOpMode  {
             telemetry.addData("ms/loop", "%.3f ms", opmodeRunTime.milliseconds() / loopCount);
 
             // Show joystick information as some other illustrative data
-            telemetry.addLine("left joystick | ")
-                    .addData("x", gamepad1.left_stick_x)
-                    .addData("y", gamepad1.left_stick_y);
-            telemetry.addLine("right joystick | ")
-                    .addData("x", gamepad1.right_stick_x)
-                    .addData("y", gamepad1.right_stick_y);
+            telemetry
+                .addLine("left joystick | ")
+                .addData("x", gamepad1.left_stick_x)
+                .addData("y", gamepad1.left_stick_y);
+            telemetry
+                .addLine("right joystick | ")
+                .addData("x", gamepad1.right_stick_x)
+                .addData("y", gamepad1.right_stick_y);
 
             /*
              * Transmit the telemetry to the driver station, subject to throttling.
@@ -159,7 +165,7 @@ public class ConceptTelemetry extends LinearOpMode  {
     // emits a line of poetry to the telemetry log
     void emitPoemLine() {
         telemetry.log().add(poem[poemLine]);
-        poemLine = (poemLine+1) % poem.length;
+        poemLine = (poemLine + 1) % poem.length;
         poemElapsed.reset();
     }
 

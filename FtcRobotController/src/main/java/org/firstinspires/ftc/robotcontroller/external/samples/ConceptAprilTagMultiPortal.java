@@ -32,7 +32,6 @@ package org.firstinspires.ftc.robotcontroller.external.samples;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -43,8 +42,8 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
  */
 @TeleOp(name = "Concept: AprilTagMultiPortal", group = "Concept")
 @Disabled
-public class ConceptAprilTagMultiPortal extends LinearOpMode
-{
+public class ConceptAprilTagMultiPortal extends LinearOpMode {
+
     VisionPortal portal1;
     VisionPortal portal2;
 
@@ -52,8 +51,7 @@ public class ConceptAprilTagMultiPortal extends LinearOpMode
     AprilTagProcessor aprilTagProcessor2;
 
     @Override
-    public void runOpMode() throws InterruptedException
-    {
+    public void runOpMode() throws InterruptedException {
         // Because we want to show two camera feeds simultaneously, we need to inform
         // the SDK that we want it to split the camera monitor area into two smaller
         // areas for us. It will then give us View IDs which we can pass to the individual
@@ -77,21 +75,20 @@ public class ConceptAprilTagMultiPortal extends LinearOpMode
         // setLiveViewContainerId(), where we pass in the IDs we received earlier from
         // makeMultiPortalView().
         portal1 = new VisionPortal.Builder()
-                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
-                .setLiveViewContainerId(portal1ViewId)
-                .addProcessor(aprilTagProcessor1)
-                .build();
+            .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+            .setLiveViewContainerId(portal1ViewId)
+            .addProcessor(aprilTagProcessor1)
+            .build();
         portal2 = new VisionPortal.Builder()
-                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 2"))
-                .setLiveViewContainerId(portal2ViewId)
-                .addProcessor(aprilTagProcessor2)
-                .build();
+            .setCamera(hardwareMap.get(WebcamName.class, "Webcam 2"))
+            .setLiveViewContainerId(portal2ViewId)
+            .addProcessor(aprilTagProcessor2)
+            .build();
 
         waitForStart();
 
         // Main Loop
-        while (opModeIsActive())
-        {
+        while (opModeIsActive()) {
             // Just show some basic telemetry to demonstrate both processors are working in parallel
             // on their respective cameras. If you want to see more detail about the information you
             // can get back from the processor, you should look at ConceptAprilTag.

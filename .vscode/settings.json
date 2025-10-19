@@ -1,0 +1,9 @@
+{
+    "editor.formatOnSave": true,
+
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+    "[java]": {
+        "editor.defaultFormatter": "mngrm3a.vscode-google-java-formatter"
+    }
+}

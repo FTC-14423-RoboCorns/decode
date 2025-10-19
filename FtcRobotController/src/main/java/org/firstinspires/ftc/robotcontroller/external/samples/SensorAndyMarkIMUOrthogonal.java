@@ -79,9 +79,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
  * this OpMode to use those parameters.
  */
 @TeleOp(name = "Sensor: AndyMark IMU Orthogonal", group = "Sensor")
-@Disabled   // Comment this out to add to the OpMode list
-public class SensorAndyMarkIMUOrthogonal extends LinearOpMode
-{
+@Disabled // Comment this out to add to the OpMode list
+public class SensorAndyMarkIMUOrthogonal extends LinearOpMode {
+
     // The AndyMark IMU sensor object
     private IMU imu;
 
@@ -89,8 +89,8 @@ public class SensorAndyMarkIMUOrthogonal extends LinearOpMode
     // Main logic
     //----------------------------------------------------------------------------------------------
 
-    @Override public void runOpMode() throws InterruptedException {
-
+    @Override
+    public void runOpMode() throws InterruptedException {
         // Retrieve and initialize the AndyMark IMU.
         // This sample expects the AndyMark IMU to be named "imu".
         imu = hardwareMap.get(IMU.class, "imu");
@@ -110,7 +110,10 @@ public class SensorAndyMarkIMUOrthogonal extends LinearOpMode
         LogoFacingDirection logoDirection = LogoFacingDirection.UP;
         I2cPortFacingDirection i2cDirection = I2cPortFacingDirection.FORWARD;
 
-        AndyMarkIMUOrientationOnRobot orientationOnRobot = new AndyMarkIMUOrientationOnRobot(logoDirection, i2cDirection);
+        AndyMarkIMUOrientationOnRobot orientationOnRobot = new AndyMarkIMUOrientationOnRobot(
+            logoDirection,
+            i2cDirection
+        );
 
         // Now initialize the AndyMark IMU with this mounting orientation.
         // Note: if you choose two conflicting directions, this initialization will cause a code exception.
