@@ -38,7 +38,7 @@ public class Shooter {
     public static double robotX = 0;
 
     //Is the robot on the red side(true) or blue side(false)
-    private int isBlue = 1;
+    private int isBlue = 1; // Why is it not a boolean?
 
     //height of the goal
 
