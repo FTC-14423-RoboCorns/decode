@@ -64,9 +64,10 @@ public class Shooter {
     private void init(HardwareMap hardwareMap) {
         //TODO: confirm mag class
         shooter = hardwareMap.get(DcMotorEx.class, "Shooter");
+        shooter.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        
         deflector = hardwareMap.get(Servo.class, "deflector");
         deflector.setPosition(DEFLECTOR_INIT);
-        shooter.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
 
     }
 

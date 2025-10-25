@@ -26,7 +26,7 @@ public class YawControl {
     // === Hardware + Dependencies ===
     private final Servo yawServo;
     private final Telemetry telemetry;
-    private final VisionSensor vision;   // External tracking/vision class
+    private final VisionSensor vision;   // External tracking/vision class // 
 
     // === Configurable constants (FTC Dashboard visible) ===
     public static double SERVO_INIT = 0.5;
@@ -52,6 +52,14 @@ public class YawControl {
         yawServo.setPosition(SERVO_INIT);
 
         // aimGoal = Robot/Game.getAlliance() == Alliance.RED ?? AimGoal.RED : AimGoal.BLUE;
+    }
+
+    private void init(HardwareMap hardwareMap) {
+
+        yawServo = hardwareMap.get(DcMotorEx.class, "YawServo");
+
+        
+
     }
 
     // === Internal control ===

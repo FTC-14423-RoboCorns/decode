@@ -27,12 +27,13 @@ public class DeflectorControl {
     private AngleState state = AngleState.AIM;
 
     // === Tunable constants (FTC Dashboard) ===
-    public static double SERVO_INIT = 0.5;
     public static double SERVO_MIN = 0.1;
     public static double SERVO_MAX = 0.9;
+    public static double SERVO_INIT = SERVO_MIN;
     public static double DISCARD_ANGLE = 0.2;      // position for discard shot
 
     // === PIDF Controller ===
+    // Is likely that we will not need it. Currently is not used anywhere
     public static double kP = 0.1;
     public static double kI = 0.0;
     public static double kD = 0.01;
@@ -48,32 +49,33 @@ public class DeflectorControl {
     // === External references ===
     private final FlywheelControl flywheel; // used to get velocity
 
-    public DeflectorControl(HardwareMap hw, Telemetry telem, FlywheelControl fwctl) {
+    public DeflectorControl(HardwareMap hw, Telemetry telem, DecodeRobot thisRobot) {
         this.telemetry = telem;
-        this.flywheel = fwctl;
-        this.deflector = hw.get(Servo.class, "deflector");
+        this.flywheel = thisRobot.shooter.flywheel;
 
         deflector.scaleRange(SERVO_MIN, SERVO_MAX);
         deflector.setPosition(SERVO_INIT);
 
-        PIDF.setTolerance(0.01);
     }
 
     // === Internal Control ===
-    private double computeTargetAngle(double robotX, double robotY, double targetX, double targetY) {
-        // Compute distance to goal
-        double dx = targetX - robotX;
-        double dy = targetY - robotY;
-        double distance = Math.sqrt(dx * dx + dy * dy);
+    private double computeTargetAngle() {
 
+        double distance = 0; // Change to getting XY-plane distance from the vision sensor to the apriltag
         double velocity = flywheel.getVelocity();
-        // TODO: Replace with your fitted plane function
-        // Example placeholder formula:
-        // angle = a * distance + b * velocity + c
+
         double angle = 0.00005 * distance + 0.00002 * velocity + 0.5;
 
         // Clamp result to servo range
         return Math.max(SERVO_MIN, Math.min(SERVO_MAX, angle));
+    }
+
+    private void init(HardwareMap hardwareMap) {
+
+        deflector = hardwareMap.get(Servo.class, "Deflector");
+        deflector.setPosition(DEFLECTOR_INIT);
+        deflector.setDirection(Servo.Direction.FORWARD);
+
     }
 
     // === External Control ===
@@ -98,7 +100,7 @@ public class DeflectorControl {
 
         switch (state) {
             case AIM:
-                targetAngle = computeTargetAngle(robotX, robotY, targetX, targetY);
+                targetAngle = computeTargetAngle();
                 break;
 
             case DISCARD:
@@ -110,15 +112,7 @@ public class DeflectorControl {
                 break;
         }
 
-        // PIDF-like servo move (currently P-only)
-        double currentPos = deflector.getPosition();
-        double correction = PIDF.calculate(currentPos, targetAngle);
-
-        // Clamp output to small steps so it doesn’t overshoot
-        double newPos = currentPos + correction;
-        newPos = Math.max(SERVO_MIN, Math.min(SERVO_MAX, newPos));
-
-        deflector.setPosition(newPos);
+        deflector.setPosition(targetAngle);
 
 
         telemetry();

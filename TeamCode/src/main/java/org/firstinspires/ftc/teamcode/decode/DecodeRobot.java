@@ -45,6 +45,7 @@ public class DecodeRobot {
     public VoltageSensor battery;
     public DatalogWrapper datalogWrapper;
     public DatalogWrapperElectricity datalogWrapperElectricity;
+    public ShooterController shooter;
 
     // Presets
     public int[] rainbow = new int[] {
@@ -150,6 +151,10 @@ public class DecodeRobot {
         sparkODO.init(hardwareMap);
         ultrasonicLocalizer = UltrasonicLocalizer.makeUltrasonicTrackingLocalizer(hardwareMap, Data.getBlue());
 
+        // Systems
+        shooter = new ShooterController(telem, this);
+        shooter.init(hardwareMap);
+
         controller = new CombinedPathFollower(0, 0, this);
         controller.init(hardwareMap);
     }
@@ -208,6 +213,7 @@ public class DecodeRobot {
         lift.update();
         intake.update();
         arm.update();
+        shooter.update();
     }
 
     public void setPose(double xPos, double yPos, double newAngle) {

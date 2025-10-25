@@ -34,10 +34,17 @@ public class FlywheelControl {
     private double lastVelocity = 0;
 
     // =================================================
-    public FlywheelControl(HardwareMap hw, Telemetry telem) {
+    public FlywheelControl(Telemetry telem, DecodeRobot thisRobot) {
         this.telemetry = telem;
         this.flywheel = hw.get(DcMotorEx.class, "shooter");
         this.flywheel.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+    }
+
+    private void init(HardwareMap hardwareMap) {
+
+        flywheel = hardwareMap.get(DcMotorEx.class, "Flywheel");
+        shooter.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER); // Why is it this specific state?
+
     }
 
     // === Internal Control ===
