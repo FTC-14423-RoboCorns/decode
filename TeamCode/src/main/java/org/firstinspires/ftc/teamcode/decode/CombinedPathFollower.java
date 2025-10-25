@@ -58,6 +58,13 @@ public class CombinedPathFollower {
 
     private PathState pathState = PathState.CURVE;
 
+    enum MoveType {
+        NORMAL,
+        RAM,
+        LOOSE,
+        PRECISE
+    }
+
     public CombinedPathFollower(double xPos, double yPos, DecodeRobot robot) {
         this.robot = robot;
         controller = new SwerveController(xPos, yPos, robot);
@@ -90,6 +97,76 @@ public class CombinedPathFollower {
         currDist = 0;
         currTime = 0;
         // tRaw = 0;
+    }
+
+    public void setPath(double targetAngle) {
+        turnOnly(targetAngle);
+    }
+
+    public void setPath(double targetAngle,MoveType moveType) {
+        switch (moveType) {
+            case NORMAL:
+                setPath(targetAngle);
+                break;
+            case LOOSE:
+                turnOnlyFast(targetAngle);
+                break;
+
+        }
+    }
+
+
+    public void setPath(double[][] points, double targetAngle) {
+        if (points.length==2) {
+
+            moveToPoint(new Vector2D(points[0][0],points[0][1]), targetAngle);
+        } else {
+            points[3][0]=getController().getPositionVector().x;
+            points[3][1]=getController().getPositionVector().y;
+            setCurve(points, targetAngle);
+        }
+
+    }
+
+    public void setPath(double[][] points, double targetAngle,MoveType moveType) {
+
+        switch (moveType) {
+            case NORMAL:
+                setPath(points,targetAngle);
+                break;
+            case RAM:
+                if (points.length==2) {
+
+                    moveToPointRam(new Vector2D(points[0][0],points[0][1]), targetAngle);
+                } else {
+                    points[3][0]=getController().getPositionVector().x;
+                    points[3][1]=getController().getPositionVector().y;
+                    setCurveRam(points, targetAngle);
+                }
+                break;
+            case LOOSE:
+                if (points.length==2) {
+
+                    moveToPointLoose(new Vector2D(points[0][0],points[0][1]), targetAngle);
+                } else {
+                    points[3][0]=getController().getPositionVector().x;
+                    points[3][1]=getController().getPositionVector().y;
+                    setCurveLoose(points, targetAngle);
+                }
+                break;
+            case PRECISE:
+                if (points.length==2) {
+
+                    moveToPointPrecise(new Vector2D(points[0][0],points[0][1]), targetAngle);
+                } else {
+                    points[3][0]=getController().getPositionVector().x;
+                    points[3][1]=getController().getPositionVector().y;
+                    setCurvePrecise(points, targetAngle);
+                }
+                break;
+        }
+
+
     }
 
     public void updateLine(double robotAngle) {
@@ -710,7 +787,7 @@ public class CombinedPathFollower {
         return error;
     }
 
-    public void setCurveRam(double[][] points, double targetAngle, double routeConstant) {
+    public void setCurveRam(double[][] points, double targetAngle) {
         loose = false;
         ram = true;
         precise = false;
@@ -728,11 +805,11 @@ public class CombinedPathFollower {
         splinePidController.setSetPoint(0);
         turnPidController.reset();
         turnPidController.setSetPoint(0);
-        this.routeConstant = routeConstant;
+       // this.routeConstant = routeConstant;
         noMoveCycles = 0;
     }
 
-    public void setCurve(double[][] points, double targetAngle, double routeConstant) {
+    public void setCurve(double[][] points, double targetAngle) {
         loose = false;
         ram = false;
         precise = false;
@@ -750,11 +827,11 @@ public class CombinedPathFollower {
         splinePidController.setSetPoint(0);
         turnPidController.reset();
         turnPidController.setSetPoint(0);
-        this.routeConstant = routeConstant;
+       // this.routeConstant = routeConstant;
         noMoveCycles = 0;
     }
 
-    public void setCurvePrecise(double[][] points, double targetAngle, double routeConstant) {
+    public void setCurvePrecise(double[][] points, double targetAngle) {
         loose = false;
         ram = false;
         precise = true;
@@ -772,11 +849,11 @@ public class CombinedPathFollower {
         splinePidController.setSetPoint(0);
         turnPidController.reset();
         turnPidController.setSetPoint(0);
-        this.routeConstant = routeConstant;
+       // this.routeConstant = routeConstant;
         noMoveCycles = 0;
     }
 
-    public void setCurveLoose(double[][] points, double targetAngle, double routeConstant) {
+    public void setCurveLoose(double[][] points, double targetAngle) {
         loose = true;
         pathState = PathState.CURVE;
         isDriving = true;
@@ -792,7 +869,7 @@ public class CombinedPathFollower {
         splinePidController.setSetPoint(0);
         turnPidController.reset();
         turnPidController.setSetPoint(0);
-        this.routeConstant = routeConstant;
+      //  this.routeConstant = routeConstant;
     }
 
     public double turnPID(double error) {

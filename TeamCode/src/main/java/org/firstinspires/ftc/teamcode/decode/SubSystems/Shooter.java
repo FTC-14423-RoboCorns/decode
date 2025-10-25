@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.decode.DecodeRobot;
 
 
 public class Shooter {
@@ -26,7 +27,7 @@ public class Shooter {
 
     public boolean isShooterOn = false;
     public boolean isDoneShooting;
-
+    private DecodeRobot robot;
     private final int FAR_VELOCITY = -1800;
     private final int NEAR_VELOCITY = -1600;//2000;
     private final int MAX_VELOCITY = -2500;
@@ -42,13 +43,13 @@ public class Shooter {
 
     //height of the goal
 
-    public Shooter(HardwareMap hardwareMap, Telemetry telem) {
+    public Shooter(HardwareMap hardwareMap, Telemetry telem, DecodeRobot thisRobot) {
         init(hardwareMap);
         //will want to instantiate the turret object, perhaps by passing robot in to the shooter constructor.
         //much of our shooter code will depend on querying turret
         //will likely need robot here as well because our "pusher" is the intake
         isShooterOn = false;
-
+        this.robot=thisRobot;
         this.telemetry = telem;
         if (Data.getBlue()) {
 
@@ -71,7 +72,7 @@ public class Shooter {
 
 
     private double deflectorHeight(double distancetogoal) {
-        double tempHeight
+        double tempHeight=0;
         //here is where we will put our calculations to convert our distance to goal to a servo position for our deflector
         return tempHeight;
     }
