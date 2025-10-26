@@ -34,7 +34,7 @@ public class DeflectorControl {
     
     // TODO: tune this contant and put it into DecodeRobot class or some new constants config class
     // It should be set to the one in the higher class, not to a number
-    public static double DELTA_SHOOTER_TO_GOAL_AIM = 1; // meters
+    public static double SHOOTER_TO_GOAL_VERTICAL_DIST = 1; // meters
     // Same for this value
     public static double THRESHOLD_SHOOTER_SWITCH = 2;
 
@@ -78,11 +78,11 @@ public class DeflectorControl {
         double distance = 0; // Change to getting XY-plane distance from the vision sensor to the apriltag
         
         double tps = flywheel.getVelocity(); // ticks per second
-        // Function: Speed = 0.9191 * tps + 1.0311
-        // The + b is wrong, it is not 1.0311. The coefficient is correct though.
-        double ball_speed = 0.009191 * tps + 1.0311;
 
-        double angle = calculateLaunchAngle(ball_speed, distance, DELTA_SHOOTER_TO_GOAL_AIM, THRESHOLD_SHOOTER_SWITCH);
+        // Function: Ball Speed (m/s) = 0.003792 Motor Speed (TPS) + 0.425867
+        double ball_speed = 0.03792 * tps + 0.425867
+
+        double angle = calculateLaunchAngle(ball_speed, distance, SHOOTER_TO_GOAL_VERTICAL_DIST, THRESHOLD_SHOOTER_SWITCH);
 
         double servoPos = mapAngleToServoPos(angle);
 
