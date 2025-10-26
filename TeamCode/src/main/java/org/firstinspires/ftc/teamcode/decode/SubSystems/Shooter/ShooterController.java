@@ -17,6 +17,23 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 @Config
 public class ShooterController {
 
+    // TODO: finish this:
+    // public enum Distance {
+    //     CLOSE,
+    //     MID,
+    //     FAR,
+    //     VERY_FAR
+    // }
+
+    // private static EnumMap<Distance, Double> velocityByDistance = new EnumMap<>(Distance.class);
+
+    // static {
+    //     velocityByDistance.put(Distance.CLOSE, 13.2);
+    //     velocityByDistance.put(Distance.MID, 15.0);
+    //     velocityByDistance.put(Distance.FAR, 16.5);
+    //     velocityByDistance.put(Distance.VERY_FAR, 17.8);
+    // }
+
     // === Subsystems ===
     private final FlywheelControl flywheel;
     private final DeflectorControl deflector;

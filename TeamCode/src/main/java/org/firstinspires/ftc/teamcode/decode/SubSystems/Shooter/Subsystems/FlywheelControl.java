@@ -23,10 +23,10 @@ public class FlywheelControl {
     private final Telemetry telemetry;
 
     private FWState state = FWState.OFF;
+    private double targetVelocity = 0;
 
     // === Tunable constants (FTC Dashboard visible) ===
     public static double MAX_VELOCITY = -2500;   // ticks per second
-    public static double TARGET_VELOCITY = -1800;
     public static double TOLERANCE = -150;   // Acceptable Δω around target velocity
 
     // === Ball exit detection ===
@@ -50,7 +50,7 @@ public class FlywheelControl {
     // === Internal Control ===
 
     private boolean isSpeedWithinTarget() {
-        return Math.abs(flywheel.getVelocity() - TARGET_VELOCITY) <= Math.abs(TOLERANCE);
+        return Math.abs(flywheel.getVelocity() - targetVelocity) <= Math.abs(TOLERANCE);
     }
 
     private boolean isShootRequested() {
@@ -80,7 +80,7 @@ public class FlywheelControl {
 
     private void telemetry(){
         telemetry.addData("FWCTL State", state);
-        telemetry.addData("FWCTL Vel (tgt)", TARGET_VELOCITY);
+        telemetry.addData("FWCTL Vel (tgt)", targetVelocity);
         telemetry.addData("FWCTL Vel (cur)", flywheel.getVelocity());
     }
 
@@ -109,7 +109,7 @@ public class FlywheelControl {
             flywheel.setVelocity(0);
             // return; // Possibly return early to save resources
         } else {
-            flywheel.setVelocity(TARGET_VELOCITY);
+            flywheel.setVelocity(targetVelocity);
         }
 
         // States bellow are never OFF

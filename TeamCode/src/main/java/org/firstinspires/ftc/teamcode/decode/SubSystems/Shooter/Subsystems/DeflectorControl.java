@@ -31,6 +31,12 @@ public class DeflectorControl {
     public static double SERVO_MAX = 0.9;
     public static double SERVO_INIT = SERVO_MIN;
     public static double DISCARD_ANGLE = 0.2;      // position for discard shot
+    
+    // TODO: tune this contant and put it into DecodeRobot class or some new constants config class
+    // It should be set to the one in the higher class, not to a number
+    public static double DELTA_SHOOTER_TO_GOAL_AIM = 1; // meters
+    // Same for this value
+    public static double THRESHOLD_SHOOTER_SWITCH = 2;
 
     // === PIDF Controller ===
     // Is likely that we will not need it. Currently is not used anywhere
@@ -58,18 +64,6 @@ public class DeflectorControl {
 
     }
 
-    // === Internal Control ===
-    private double computeTargetAngle() {
-
-        double distance = 0; // Change to getting XY-plane distance from the vision sensor to the apriltag
-        double velocity = flywheel.getVelocity();
-
-        double angle = 0.00005 * distance + 0.00002 * velocity + 0.5;
-
-        // Clamp result to servo range
-        return Math.max(SERVO_MIN, Math.min(SERVO_MAX, angle));
-    }
-
     private void init(HardwareMap hardwareMap) {
 
         deflector = hardwareMap.get(Servo.class, "Deflector");
@@ -77,6 +71,51 @@ public class DeflectorControl {
         deflector.setDirection(Servo.Direction.FORWARD);
 
     }
+
+    // === Internal Control ===
+    private double computeTargetAngle() {
+
+        double distance = 0; // Change to getting XY-plane distance from the vision sensor to the apriltag
+        
+        double tps = flywheel.getVelocity(); // ticks per second
+        // Function: Speed = 0.9191 * tps + 1.0311
+        // The + b is wrong, it is not 1.0311. The coefficient is correct though.
+        double ball_speed = 0.009191 * tps + 1.0311;
+
+        double angle = calculateLaunchAngle(ball_speed, distance, DELTA_SHOOTER_TO_GOAL_AIM, THRESHOLD_SHOOTER_SWITCH);
+
+        double servoPos = mapAngleToServoPos(angle);
+
+        // Clamp result to servo range
+        return clamp(SERVO_MIN, SERVO_MAX, servoPos);
+    }
+
+    private double calculateLaunchAngle(double v, double d, double dz, double threshold) {
+        final double g = 9.81; // m/s²
+
+        double term = Math.pow(v, 4) - g * (g * Math.pow(d, 2) + 2 * dz * Math.pow(v, 2));
+
+        if (term < 0) return 0; // no valid shot, retract deflector
+
+        double sqrtTerm = Math.sqrt(term);
+
+        // Choose sign based on distance: use high arc for close shots
+        double sign = (d < threshold) ? +1 : -1;
+
+        double theta = Math.atan((Math.pow(v, 2) + sign * sqrtTerm) / (g * d));
+
+        return Math.toDegrees(theta);
+    }
+
+    private double mapAngleToServoPos(double theta){
+        //TODO: make a function that maps the angle of the deflector to the desired servo position
+        return 0;
+    }
+
+    private double clamp (double min, double max, double val){
+        return Math.max(min, Math.min(max, val));
+    }
+
 
     // === External Control ===
     public void setState(AngleState newState) {
