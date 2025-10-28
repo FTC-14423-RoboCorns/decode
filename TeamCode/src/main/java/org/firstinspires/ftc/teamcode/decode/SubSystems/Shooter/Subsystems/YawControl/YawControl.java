@@ -1,8 +1,13 @@
 package org.firstinspires.ftc.teamcode.decode.SubSystems.Shooter.Subsystems.YawControl;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 /**
@@ -26,8 +31,8 @@ public class YawControl {
     // === Hardware + Dependencies ===
     private final Servo yawServo;
     private final Telemetry telemetry;
-    private final VisionSensor vision;   // External tracking/vision class // 
-
+    private final Limelight3A limelight;   // External tracking/vision class //
+    private ElapsedTime runtime = new ElapsedTime();
     // === Configurable constants (FTC Dashboard visible) ===
     public static double SERVO_INIT = 0.5;
     public static double SERVO_MIN = 0.1;
@@ -38,27 +43,30 @@ public class YawControl {
     public static double RED_GOAL_Y = -36;
     public static double BLUE_GOAL_X = -72;
     public static double BLUE_GOAL_Y = -36;
+    public double robotAngle = 0;
 
+    private
     // === Runtime state ===
-    private YawState state = YawState.GENERAL_DIRECTION;
+    YawState state = YawState.GENERAL_DIRECTION;
     public static AimGoal aimGoal = AimGoal.RED; // Default; can be set externally
-
+    private YawServoPID PID = new YawServoPID(0.013, 0.0000025, 0.0001);
+    //TODO: Fix ServoPID with real world testing
+    private double xError;
     public YawControl(HardwareMap hw, Telemetry telem) {
         this.telemetry = telem;
         this.yawServo = hw.get(Servo.class, "yaw");
-        this.vision = new VisionSensor(hw, telem);
+        this.limelight = hw.get(Limelight3A.class, "limelight");
+
+        limelight.setPollRateHz(100); //look every 100 ms
+        limelight.start();
+        limelight.pipelineSwitch(9);
 
         yawServo.scaleRange(SERVO_MIN, SERVO_MAX);
         yawServo.setPosition(SERVO_INIT);
 
-        // aimGoal = Robot/Game.getAlliance() == Alliance.RED ?? AimGoal.RED : AimGoal.BLUE;
     }
 
     private void init(HardwareMap hardwareMap) {
-
-        yawServo = hardwareMap.get(DcMotorEx.class, "YawServo");
-
-        
 
     }
 
@@ -67,29 +75,41 @@ public class YawControl {
         telemetry.addData("YCTL Alliance", aimGoal);
         telemetry.addData("YCTL Aim State", state);
         telemetry.addData("YCTL Servo Pos", yawServo.getPosition());
+        telemetry.addData("YCTL Servo Degree", convertServoPos(yawServo.getPosition()));
     }
 
     private void aimGeneralDirectionUpdate() {
-        // TODO: Abi’s general-direction aiming code
-        // Should use robot’s (x, y, heading) and goal coordinates.
+        double errorFromFront = robotAngle - 0;
+        /* 0 needs to be substituted with the angle the robot has during the start
+           this gives us the error from the front
+         */
+        //alr so this is just temporary bc we have no function to switch from red-blue yet
+        if (aimGoal == AimGoal.RED)
+            yawServo.setPosition(goToDegree( 45 - errorFromFront));
+        if (aimGoal == AimGoal.BLUE)
+            yawServo.setPosition(goToDegree( 90 - errorFromFront));
     }
 
     private void aimAprilTagUpdate() {
-        // TODO: Abi’s AprilTag-based fine-aiming code
-        // Example: uses vision.getTagYawOffset(), vision.getDistance(), etc.
+        //this should be everything except im unsure if runtime is properly being set
+        //we wont know till testing :)
+        yawServo.setPosition(PID.getPos(this.xError, runtime, yawServo.getPosition()));
     }
 
-    private void resetAprilTagAimingParameters(){
-        // I anticipate that there will be some PID constants to be reset
-        // when switching from AprlitTag aiming to General Direction
-        // and vice versa
+    public double convertServoPos(double servoPos)
+    {
+        //convert servo position to current degrees
+        double y = (servoPos*-284.27208) + 231.88861;
+        return y; //change
+    }
+    public double goToDegree(double targetDegree)
+    {
+        //convert degrees to servo position
+        double servoPos = (targetDegree - 231.88861)/-284.27208;
+        return servoPos;
     }
 
-    private void resetGeneralDirectionAimingParameters(){
-        // I anticipate that there will be some PID constants to be reset
-        // when switching from AprlitTag aiming to General Direction
-        // and vice versa
-    }
+    //no reset
 
     // === External control ===
 
@@ -100,12 +120,21 @@ public class YawControl {
     }
 
     // === Main update loop ===
-    public void update() {
+    public void update(double orientation) {
 
+        this.robotAngle = orientation;
         // Determine which aiming mode to use
-        if (vision.detectedAprilTag()) {
+        LLResult result = limelight.getLatestResult();
+        if (result != null && result.isValid())
+        {
             state = YawState.APRILTAG;
-        } else {
+            this.xError = result.getTy();
+            //this is weird cus y error is actually x error since the cam is sideways
+            //i might fix this later but if it works it works
+
+        }
+        else
+        {
             state = YawState.GENERAL_DIRECTION;
         }
 
@@ -119,7 +148,6 @@ public class YawControl {
                 aimAprilTagUpdate();
                 break;
         }
-
         telemetry();
     }
 }
