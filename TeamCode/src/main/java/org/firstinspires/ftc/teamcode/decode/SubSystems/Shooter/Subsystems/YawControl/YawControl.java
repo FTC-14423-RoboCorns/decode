@@ -17,10 +17,24 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 @Config
 public class YawControl {
 
+    /*
+     * TODO:
+     * 
+     * Instead of there being multiple functions for each state,
+     * Let it have one aiming function, aimTarget()
+     * Let there be a private double target;
+     * Then in update() depending on the state
+     * It either changes the target to one of the presets
+     * Or updates it relative to the general direction
+     * 
+     */
+
     /** Internal turret state */
     public enum YawState {
         GENERAL_DIRECTION,
-        APRILTAG
+        APRILTAG,
+        MANUAL, // This one will be connected to buttons or joystics in case something goes wrong
+        FIXED // This one will be used if something goes wring and we will just set it to always face front
     }
 
     /** Alliance (to be moved into Robot or Competition class later) */
@@ -43,13 +57,13 @@ public class YawControl {
     public static double RED_GOAL_Y = -36;
     public static double BLUE_GOAL_X = -72;
     public static double BLUE_GOAL_Y = -36;
-    public double robotAngle = 0;
+    public double robotAngle = 0; // We should fetch it from the default state
 
-    private
+    
     // === Runtime state ===
-    YawState state = YawState.GENERAL_DIRECTION;
+    private YawState state = YawState.GENERAL_DIRECTION;
     public static AimGoal aimGoal = AimGoal.RED; // Default; can be set externally
-    private YawServoPID PID = new YawServoPID(0.013, 0.0000025, 0.0001);
+    private YawServoPID PID = new YawServoPID(0.013, 0.0000025, 0.0001); // Why is it its own class and not PIDFController?
     //TODO: Fix ServoPID with real world testing
     private double xError;
     public YawControl(HardwareMap hw, Telemetry telem) {
@@ -146,6 +160,12 @@ public class YawControl {
 
             case APRILTAG:
                 aimAprilTagUpdate();
+                break;
+
+            case MANUAL:
+                break;
+            
+            case FIXED:
                 break;
         }
         telemetry();
