@@ -32,7 +32,8 @@ public class YawControl {
     /** Internal turret state */
     public enum YawState {
         GENERAL_DIRECTION,
-        APRILTAG,
+        APRILTAG_AIMING,
+        APRILTAG_LOCKED,
         MANUAL, // This one will be connected to buttons or joystics in case something goes wrong
         FIXED // This one will be used if something goes wring and we will just set it to always face front
     }
@@ -57,6 +58,7 @@ public class YawControl {
     public static double RED_GOAL_Y = -36;
     public static double BLUE_GOAL_X = -72;
     public static double BLUE_GOAL_Y = -36;
+    public static double X_ERROR_TOLERANCE = 2;
     public double robotAngle = 0; // We should fetch it from the default state
 
     
@@ -141,8 +143,13 @@ public class YawControl {
         LLResult result = limelight.getLatestResult();
         if (result != null && result.isValid())
         {
-            state = YawState.APRILTAG;
+            state = YawState.APRILTAG_AIMING;
             this.xError = result.getTy();
+
+            if(Math.abs(xError) < X_ERROR_TOLERANCE){
+                state = YawState.APRILTAG_LOCKED;
+            }
+            
             //this is weird cus y error is actually x error since the cam is sideways
             //i might fix this later but if it works it works
 
@@ -158,7 +165,8 @@ public class YawControl {
                 aimGeneralDirectionUpdate();
                 break;
 
-            case APRILTAG:
+            case APRILTAG_LOCKED:
+            case APRILTAG_AIMING:
                 aimAprilTagUpdate();
                 break;
 
@@ -168,6 +176,8 @@ public class YawControl {
             case FIXED:
                 break;
         }
+
+
         telemetry();
     }
 }
