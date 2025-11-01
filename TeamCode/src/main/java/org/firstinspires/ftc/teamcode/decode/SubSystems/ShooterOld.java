@@ -10,7 +10,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.decode.DecodeRobot;
 
 
-public class Shooter {
+public class ShooterOld {
     public DcMotorEx shooter;
     public Servo deflector;
     public Telemetry telemetry;
@@ -43,7 +43,7 @@ public class Shooter {
 
     //height of the goal
 
-    public Shooter(HardwareMap hardwareMap, Telemetry telem, DecodeRobot thisRobot) {
+    public ShooterOld(HardwareMap hardwareMap, Telemetry telem, DecodeRobot thisRobot) {
         init(hardwareMap);
         //will want to instantiate the turret object, perhaps by passing robot in to the shooter constructor.
         //much of our shooter code will depend on querying turret

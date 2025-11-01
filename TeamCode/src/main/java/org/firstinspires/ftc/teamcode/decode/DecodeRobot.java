@@ -12,14 +12,14 @@ import java.util.List;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.teamcode.decode.SubSystems.Arm;
-import org.firstinspires.ftc.teamcode.decode.SubSystems.Data;
+//import org.firstinspires.ftc.teamcode.decode.SubSystems.Arm;
 import org.firstinspires.ftc.teamcode.decode.SubSystems.DatalogWrapper;
 import org.firstinspires.ftc.teamcode.decode.SubSystems.DatalogWrapperElectricity;
 import org.firstinspires.ftc.teamcode.decode.SubSystems.Intake;
-import org.firstinspires.ftc.teamcode.decode.SubSystems.Lift;
+//import org.firstinspires.ftc.teamcode.decode.SubSystems.Lift;
 import org.firstinspires.ftc.teamcode.decode.SubSystems.OurQwiicLEDStick;
 import org.firstinspires.ftc.teamcode.decode.SubSystems.SparkfunOdo;
+import org.firstinspires.ftc.teamcode.decode.SubSystems.Shooter.ShooterController;
 //import org.firstinspires.ftc.teamcode.decode.SubSystems.UltrasonicLocalizer;
 
 public class DecodeRobot {
@@ -35,8 +35,8 @@ public class DecodeRobot {
     // Systems
     public CombinedPathFollower controller;
     public IMU imu;
-    public Arm arm = new Arm();
-    public Lift lift = new Lift();
+   // public Arm arm = new Arm();
+   // public Lift lift = new Lift();
     public Intake intake = new Intake();
     public DistanceSensor prox;
     public SparkfunOdo sparkODO = new SparkfunOdo();

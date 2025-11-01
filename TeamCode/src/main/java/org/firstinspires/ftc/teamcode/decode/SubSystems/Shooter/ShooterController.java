@@ -3,6 +3,10 @@ package org.firstinspires.ftc.teamcode.decode.SubSystems.Shooter;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.decode.DecodeRobot;
+import org.firstinspires.ftc.teamcode.decode.SubSystems.Shooter.Subsystems.DeflectorControl;
+import org.firstinspires.ftc.teamcode.decode.SubSystems.Shooter.Subsystems.FlywheelControl;
+import org.firstinspires.ftc.teamcode.decode.SubSystems.Shooter.Subsystems.YawControl.YawControl;
 
 /**
  * ShooterController
@@ -41,10 +45,10 @@ public class ShooterController {
         flywheel = new FlywheelControl();
         flywheel.init(hardwareMap);
 
-        deflector = new DeflectorController(telem, this);
+        deflector = new DeflectorController(telemetry, this);
         deflector.init(hardwareMap);
 
-        yaw = new YawController(telem, this);
+        yaw = new YawControl(hardwareMap,telemetry);
         yaw.init(hardwareMap);
 
     }
@@ -62,12 +66,26 @@ public class ShooterController {
         // TODO: Stop all shooter motion
     }
 
+    public void shootUntilEmpty() {
+        // TODO: shoot until all are gone, using either sensors (preferred) or time
+    }
+
     public void discardShot() {
         // TODO: Lower deflector and shoot short-range
     }
 
     public void manualAdjust(double deflectorPos, double flywheelSpeed) {
         // TODO: Allow driver to manually control angle and speed
+    }
+
+    public boolean isAimed() {
+        // TODO: return true if aimed
+        return false;
+    }
+
+    public boolean isAtSpeed() {
+        // TODO: check flywheel state and return true if at speed
+        return false;
     }
 
     // === Update Loop ===

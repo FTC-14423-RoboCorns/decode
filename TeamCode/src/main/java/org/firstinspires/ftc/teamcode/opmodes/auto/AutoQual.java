@@ -23,7 +23,7 @@ public class AutoQual extends OpMode {
 
     public DecodeRobot robot = new DecodeRobot(0, 0, 0);
     public boolean isRed = true;
-    private boolean center = true;
+    private boolean farstart = true;
     public int autoChoice = 1;
     private double angle = 0;
     private int delay = 0;
@@ -46,13 +46,14 @@ public class AutoQual extends OpMode {
     //set maxshots to a proper number
     public static int MAXSHOTS = 6;
     public static int MINSHOTS = 1;
-    int shotCount = 0;
+    int cycleCount = 0;
     private boolean donePlace = false;
     private boolean notMoving = false;
 
     //These will be adjusted for our auto states
     private enum DriveState {
-        TRAJECTORY_1,
+        SHOOT_1,
+        PARK,
         TRAJECTORY_2,
         EXTRA,
         TURN,
@@ -73,15 +74,15 @@ public class AutoQual extends OpMode {
         PLACE_NOPIXEL,
         BACKOUT,
         APRIL,
-        LETGO,
-        COMEDOWN,
+        WAIT_1,
+        PATH_3,
         GOTOBLOCKS,
         GETBLOCK,
         TURNBLOCK,
-        DROPBLOCK,
-        ARMUP,
+        PATH_1,
+        PATH_2,
         EXTEND,
-        RETRACT,
+        PATH_4,PATH_4a,
         TURN2,
         EXTEND2,
         GETBLOCK2,
@@ -95,7 +96,7 @@ public class AutoQual extends OpMode {
         TURNBLOCK3,
         DROPBLOCK3,
         EXTENDBACK,
-        ONWAIT,
+        INTAKE_2,
         STARTPICKUP2,
         IDLE,
         ALIGN,
@@ -159,18 +160,18 @@ public class AutoQual extends OpMode {
         WAITARM3,
         WAITARM4,
         EXTENDTIME2,
-        PLACE,
+        PLACE, INTAKE_1,
     }
 
     //change enum values to match our choice of park locations
-    private enum ParkState {
-        LEFTSIDE,
-        RIGHTSIDE,
+    private enum ParkState { //off the launch line - we can pick as many places we want
+        CLOSE,
+        FAR,
     }
 
     //we may not need - tracks the state of any given intake sequence
     private enum IntakeState {
-        GETBLOCK,
+        GETBALLS,
         ONWAIT,
         EXTEND,
         GETBLOCKSPECIMEN,
@@ -186,18 +187,18 @@ public class AutoQual extends OpMode {
 
     //we will need to change names and add more paths for our various ways of doing auto (which first, whether we dump, etc)
     private enum Path {
-        BASKET(6), //need to set values for number of shots for each path if that helps
-        SPECIMEN(4); //,
+        ONETIME(2), //need to set values for number of shots for each path if that helps
+        DUMP(5); //,
 
         // STOP;
-        private final int defaultShots;
+        private final int defaultCycles;
 
         Path(final int newValue) {
-            defaultShots = newValue;
+            defaultCycles = newValue;
         }
 
-        public int getShots() {
-            return defaultShots;
+        public int getCycles() {
+            return defaultCycles;
         }
 
         private static Path[] vals = values();
@@ -211,7 +212,7 @@ public class AutoQual extends OpMode {
         }
     }
 
-    private Path path = Path.SPECIMEN;
+    private Path path = Path.ONETIME; //default - one set of two to start - we will add a dump as we get better
 
     //will need to change enums for clarity, but this will track our shooter operations. We may wind up moving into a shooter class
     private enum ShootState {
@@ -243,7 +244,7 @@ public class AutoQual extends OpMode {
         IDLE,
     }
 
-    ParkState parkSide = parkSide = ParkState.RIGHTSIDE; //default for blue1;
+    ParkState parkSide = parkSide = ParkState.FAR; //default for blue1;
 
     //this will track our spindexer states. We might wind up moving to a separate class
     public enum TransferStates {
@@ -293,11 +294,11 @@ public class AutoQual extends OpMode {
     //private SwerveHeading[][][] boardArray2= new SwerveHeading[2][2][3];
     private int blueSide = 0;
     private int redSide = 1;
-    private int shots = 5; //set shots to a proper number
+    private int cycles = 2; //set shots to a proper number
     private int color = blueSide;
 
     boolean isDPRDown = false;
-    private DriveState driveState = DriveState.TRAJECTORY_1;
+    private DriveState driveState = DriveState.SHOOT_1;
     private ShootState dropState = ShootState.IDLE;
     public ElapsedTime dropTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
     public ElapsedTime intakeTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
@@ -319,9 +320,12 @@ public class AutoQual extends OpMode {
         //  robot.sparkODO.configureOtos();//only configure here, not in TeleOp
 
         robot.readi2c(); //TODO: Read only when needed
-        robot.arm.openStopper();
+        //remember, Robot init cannot move anything, so all movement into place goes here
+        //TODO: CLOSE GATE INIT
+        //TODO: OPEN HOOD INIT
+        //TODO: CENTER TURRET INIT
         robot.controller.getController().setLocalizerMode(CombinedLocalizer.PoseMode.SPARK);
-
+        cycles=path.getCycles();
         //include robot and subsytem initialization here
 
         dropTimer.startTime();
@@ -343,7 +347,7 @@ public class AutoQual extends OpMode {
         robot.readi2c();
         //robot.intake.extendRelease();
         robot.controller.getController().combinedLocalizer.localizerUpdate();
-
+        //TODO:VISION INIT TO SEE PATTERN
         //robot.controller.getController().updateLocalizer(robot.sparkODO.getPose().h);
         // robot.controller.getController().zeroPower(0);
 
@@ -351,26 +355,25 @@ public class AutoQual extends OpMode {
         if (currentGamepad1.dpad_right & !previousGamepad1.dpad_right) {
             //  isDPRDown=true;
             path = path.next();
-            shots = path.getShots();
+            cycles = path.getCycles();
         }
         //change number of shots
         if (currentGamepad1.dpad_up & !previousGamepad1.dpad_up) {
             //
-            isDPRDown = true;
-
-            shots++;
-            shots = Range.clip(shots, MINSHOTS, MAXSHOTS);
+            // isDPRDown = true;
+            //manually control the number of cycles. But typically better to go with path default, depending on what we do
+            cycles++;
+            cycles = Range.clip(cycles, MINSHOTS, MAXSHOTS);
         }
         if (currentGamepad1.dpad_down & !previousGamepad1.dpad_down) {
             //  isDPRDown=true;
-            shots--;
-            shots = Range.clip(shots, MINSHOTS, MAXSHOTS);
+            cycles--;
+            cycles = Range.clip(cycles, MINSHOTS, MAXSHOTS);
             //samples=4;
         }
 
         if (gamepad1.right_trigger > 0.5) {
-            //add any motion we need from the robot here (moving spindexer, adjusting etc.)
-            //robot.arm.closeClaw();
+            //TODO: ADD CODE TO OPEN AND CLOSE GATE FOR EASY BALL LOADING
         } else if (gamepad1.left_trigger > 0.5) {
             //robot.arm.openClaw();
         }
@@ -386,20 +389,21 @@ public class AutoQual extends OpMode {
 
         //set start position here
         if (gamepad1.a) {
-            center = true; //may need an enum depending on how many start positions
+            farstart = true; //may need an enum depending on how many start positions
         } else if (gamepad1.y) {
-            center = false;
+            farstart = false;
         }
 
         //record side for teleop
         Data.setRed(isRed);
         // if (gamepad1.dpad_right && !isDPRDown)
 
-        telemetry.addData("Start Pos ay Center (true) Side (false)", center); //change to match start pos options
+        telemetry.addData("Start Pos ay Far Start (true) Near Start (false)", farstart); //change to match start pos options
         telemetry.addData("isRed xb Red (true) Blue (false)", isRed);
         //   telemetry.addData("park trigger", parkSide);
-        telemetry.addData("Path choice dpad right", path);
-        telemetry.addData("Shot Count dpad up/down", shots);
+        telemetry.addData("Auto Path choice dpad right", path);
+        telemetry.addData("Cycle Count dpad up/down", cycles);
+        //TODO:SEND TELEMETRY SHOWING PATTERN
         //add telemetry here for things we want to check - like apriltag distance and angle, making sure we can read obelisk, imu, etc.
         //  telemetry.addData("arm servo",robot.arm.armServo.getPosition());
         //  telemetry.addData("extendo",robot.intake.extendo.getPosition());
@@ -407,24 +411,25 @@ public class AutoQual extends OpMode {
         // telemetry.addData("localizer",Math.toDegrees((((robot.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) + Math.toRadians(360)) % Math.toRadians(360)) + Math.toRadians(180)) % Math.toRadians(360)));
 
         //set our starting positions by path, starting pos, and color
-        if (path == Path.SPECIMEN) {
+        //TODO:SET STARTING POSITIONS
+        if (path == Path.DUMP) {
             if (isRed) {
                 //TODO: Set start poses
                 robot.controller.getController().initzeroPower(Math.toRadians(0));
-                if (center) {
+                if (farstart) {
                     robot.setPose(4, -64, Math.toRadians(270)); //-9
                 } else {
                     robot.setPose(-23.5, -64, Math.toRadians(270));
                 }
             } else {
                 robot.controller.getController().initzeroPower(Math.toRadians(180));
-                if (center) {
+                if (farstart) {
                     robot.setPose(-4, 64, Math.toRadians(90)); //9
                 } else {
                     robot.setPose(23.5, 64, Math.toRadians(90));
                 }
             }
-        } else if (path == Path.BASKET) {
+        } else if (path == Path.ONETIME) {
             if (isRed) {
                 //TODO: Set start poses
                 robot.controller.getController().initzeroPower(Math.toRadians(0));
@@ -460,15 +465,16 @@ public class AutoQual extends OpMode {
             module.clearBulkCache();
         }
 
-        robot.readi2c();
+        robot.readi2c(); //TODO: Read only what's needed
         robot.controller.getController().setLocalizerMode(CombinedLocalizer.PoseMode.SPARK);
         robot.controller.getController().updateCombinedLocalizer();
         // robot.controller.getController().updateLocalizer(robot.sparkODO.getPose().h)
         // Start the state machines for the particular path
-        if (path == Path.SPECIMEN) {
-            specimenStart();
-        } else if (path == Path.BASKET) {
-            basketStart();
+        //TODO: USE VISION TO READ PATTERN APRIL TAG AND STORE IT IN CASE WE EVER WANT TO DO ANYTHING WITH IT
+        if (path == Path.DUMP) {
+            dumpStart();
+        } else if (path == Path.ONETIME) {
+            onetimeStart();
         } else {}
 
         /*This was for testing auto
@@ -522,13 +528,13 @@ public class AutoQual extends OpMode {
 
         //this is the primary work in auto - it calls the intake state machine and the path macros.
         // Decode will likely do something similar. Our intake is much simpler and will likely not need an intake machine
-        if (path == Path.SPECIMEN) {
+        if (path == Path.DUMP) {
             //colors handled in main code
             intake();
             specimen();
-        } else if (path == Path.BASKET) {
+        } else if (path == Path.ONETIME) {
             intake();
-            basket();
+            onetime();
             //  System.out.println("14423 state: "+driveState);
         }
         //we leave this in in case we ever want to manually drive in auto
@@ -630,7 +636,7 @@ public class AutoQual extends OpMode {
                         intakeState = IntakeState.IDLE;
                         //driveState = DriveState.RETRACT;
                     } else {
-                        if (shotCount < 5) {
+                        if (cycleCount < 5) {
                             robot.intake.extendoOutFast();
                         }
                         //was fast
@@ -643,8 +649,8 @@ public class AutoQual extends OpMode {
                     }
                 }
                 break;
-            case GETBLOCK:
-                if (shotCount > 3) {
+            case GETBALLS:
+                if (cycleCount > 3) {
                     if (intakeTimer.milliseconds() > 400) {
                         robot.intake.intakeStopperClosed();
                         robot.intake.wristPickupSub();
@@ -669,7 +675,7 @@ public class AutoQual extends OpMode {
             case ONWAIT:
                 robot.intake.getIntakeProx();
                 if (intakeTimer.milliseconds() > 100) {
-                    if (shotCount > 3) {
+                    if (cycleCount > 3) {
                         robot.intake.wristPickupSub();
                     } else {
                         robot.intake.wristPickup();
@@ -691,7 +697,7 @@ public class AutoQual extends OpMode {
                         intakeState = IntakeState.IDLE;
                         robot.intake.intakeState = Intake.IntakeStates.OFF;
                         // driveState = DriveState.RETRACT;
-                    } else if (shotCount > 3 && extendTimer.milliseconds() > 1000) {
+                    } else if (cycleCount > 3 && extendTimer.milliseconds() > 1000) {
                         dropTimer.reset();
                         intakeTimer.reset();
                         // robot.intake.gripperClose();
@@ -708,7 +714,7 @@ public class AutoQual extends OpMode {
                         intakeState = IntakeState.IDLE;
                         //driveState = DriveState.RETRACT;
                     } else {
-                        if (shotCount < 4) {
+                        if (cycleCount < 4) {
                             robot.intake.extendoOutFast();
                         }
                         //was fast
@@ -779,115 +785,157 @@ public class AutoQual extends OpMode {
         }
     }
 
-    public void basketStart() {
-        robot.limelight.pipelineSwitch(4);
-        robot.lift.setLiftPos(Lift.LiftLevel.BASKETHIGH.getValue());
-        robot.lift.isPlacing = true;
-        robot.arm.closeClawBasket();
-        robot.arm.armPreBasket();
-        robot.intake.wristTransfer();
+    public void onetimeStart() {
+        robot.limelight.pipelineSwitch(4);//TODO:SET VISION TO PROPER APRILTAG TARGET
+        //TODO: START FLYWHEEL SPINUP TO SPEED BASED ON NEAR/FAR POSITION
+        //TODO: TURN TURRET TO GOAL
 
+        /*
         if (isRed) {
             robot.controller.moveToPoint(new Vector2D(58.5, -52.5), Math.toRadians(248)); //-53 ,248
         } else {
             robot.controller.moveToPoint(new Vector2D(-58.5, 52.5), Math.toRadians(68));
         }
+
+         */
     }
 
     //this does most of the work for auto. Each state is very short, with the next state triggered by time or sensor.
     //we will need to figure out how to ensure we have three balls
-    public void basket() {
+    public void onetime() {
         //  robot.controller.update(robot.getOrientation());
         switch (driveState) {
-            case TRAJECTORY_1: //specimenCount=0
-                robot.arm.armPreBasket();
-                robot.controller.getController().setLocalizerMode(CombinedLocalizer.PoseMode.SPARK);
+            case SHOOT_1: //specimenCount=0
 
-                // robot.arm.armPreBasket();
-                if (robot.controller.remainingAngle < Math.abs(Math.toRadians(50))) {
-                    robot.intake.extendMost2();
-                    robot.arm.clawWristOver();
-                }
-
-                if (robot.controller.remainingAngle < Math.abs(Math.toRadians(50))) {
-                    intakeState = IntakeState.GETBLOCK;
-                }
-
-                // robot.intake.extendLevels(24);
-                //robot.arm.clawWristBack();
-                // robot.arm.armBasketAuto();
-
-                if (!robot.controller.isDriving() && robot.lift.isAtBasketPosition()) {
-                    driveState = DriveState.LETGO;
-                    dropTimer.reset();
+                if (robot.shooter.isAimed() && robot.shooter.isAtSpeed()) {
+                    robot.controller.getController().setLocalizerMode(CombinedLocalizer.PoseMode.SPARK);
+                    robot.shooter.shootUntilEmpty();
+                    driveState = DriveState.WAIT_1;
                 }
                 break;
-            case LETGO:
-                if (dropTimer.milliseconds() > 0) {
-                    //220
+            case WAIT_1:
+                if (robot.intake.isEmpty()) {
+                    //TODO:Add "isEmpty" to intake subsystem using sensors
+                    cycleCount++;
 
-                    shotCount++; //specimentCOunt=1
 
-                    robot.arm.armBackBasket();
-                    //robot.arm.openClaw();
-                    // robot.arm.openClaw();
-                    dropTimer.reset();
-                    driveState = DriveState.DROPBLOCK;
+                    if (cycleCount==1) {
+                        driveState = DriveState.PATH_1;
+                    }
+                    else if (cycleCount ==2) {
+                        driveState = DriveState.PATH_3;
+                    } else if (cycleCount == 3) {
+                        driveState = DriveState.PARK;
+                    }
                 }
                 break;
-            case DROPBLOCK:
-                if (dropTimer.milliseconds() > 50) {
-                    //350
-                    robot.arm.openClaw();
-                    driveState = DriveState.ARMUP;
-                }
-                break;
-            case ARMUP:
-                //robot.arm.armPlaceDone();
-
-                if (dropTimer.milliseconds() > 200) {
-                    robot.arm.clawWristFront();
-                    robot.arm.armTransfer();
-                    driveState = DriveState.COMEDOWN;
-                    dropTimer.reset();
-                }
-
-                break;
-            case COMEDOWN:
-                if (dropTimer.milliseconds() > 175) {
-                    //TODO include test that place is done
-                    robot.lift.setLiftPos(0); //250
-                    //robot.lift.liftFullDown();
-                    // robot.lift.setLiftPos(0);
-                    driveState = DriveState.ONWAIT;
-                }
-
-                break;
-            case ONWAIT:
-                if (intakeState == IntakeState.IDLE) {
-                    driveState = DriveState.RETRACT;
-                }
-                break;
-            case RETRACT:
+            case PATH_1:
+                //TODO: robot.controller.setPath to first set of balls
                 if (isRed) {
-                    robot.controller.moveToPoint(new Vector2D(62.5, -53.5), Math.toRadians(263)); //61.5,-55//265
+                    //red path
                 } else {
-                    robot.controller.moveToPoint(new Vector2D(-62.5, 53.5), Math.toRadians(85));
+                    //blue path
                 }
-                if (dropTimer.milliseconds() > 100) {
-                    //250
+                driveState = DriveState.INTAKE_1;
 
-                    robot.intake.wristTransfer();
 
-                    robot.arm.armTransfer();
-                    robot.intake.extendTransfer();
+                break;
+            case INTAKE_1:
+                if (robot.controller.remainingDistance < 6) {
+                    intakeState = IntakeState.GETBALLS;
+                    //TODO: Create Intake states that turns on intake and then turns off when 3 balls in place
+                }
 
-                    driveState = DriveState.STARTTRANSFER;
-                    //driveState = DriveState.IDLE;
-                    dropTimer.reset();
+                if (!robot.controller.isDriving()) {
+                    //TODO: robot.controller.setPath to shooting position
+                    if (isRed) {
+                        //red path
+                    } else {
+                        //blue path
+                    }
+                    driveState = DriveState.PATH_2;
+
+                }
+                break;
+
+            case PATH_2:
+
+                if (!robot.controller.isDriving()) {
+                    //TODO: robot.controller.setPath to shooting position
+                    if (isRed) {
+                        //red path
+                    } else {
+                        //blue path
+                    }
+                    driveState = DriveState.SHOOT_1;
                 }
 
                 break;
+            case PATH_3:
+                //TODO: robot.controller.setPath to second set of balls
+                if (isRed) {
+                    //red path
+                } else {
+                    //blue path
+                }
+                driveState = DriveState.INTAKE_2;
+
+                break;
+            case INTAKE_2:
+                if (robot.controller.remainingDistance < 6) {
+                    intakeState = IntakeState.GETBALLS;
+                    //TODO: Create Intake states that turns on intake and then turns off when 3 balls in place
+                }
+
+                if (!robot.controller.isDriving()) {
+                    //TODO: robot.controller.setPath to shooting position
+                    if (isRed) {
+                        //red path
+                    } else {
+                        //blue path
+                    }
+                    driveState = DriveState.PATH_4;
+
+                }
+                break;
+            case PATH_4:
+                if (!robot.controller.isDriving()) {
+                    //TODO: robot.controller.setPath to shooting position
+                    if (isRed) {
+                        //red path
+                    } else {
+                        //blue path
+                    }
+                    driveState = DriveState.SHOOT_1;
+                }
+                  break;
+              case PARK:
+                  //TODO: Set paths based on our various park states and blue or red side
+                  switch (parkSide) {
+                      case FAR:
+                          if (isRed) {
+                              //red path
+                          } else {
+                              //blue path
+                          }
+                          break;
+
+                      case CLOSE:
+                          if (isRed) {
+                              //red path
+                          } else {
+                              //blue path
+                          }
+                          break;
+                  }
+
+
+                          ]
+
+                  break;
+
+
+
             case STARTTRANSFER:
                 if (dropTimer.milliseconds() > 100) {
                     //500
@@ -1013,7 +1061,7 @@ public class AutoQual extends OpMode {
                 // robot.arm.armBasketAuto();
 
                 if (!robot.controller.isDriving() && robot.lift.isAtBasketPosition()) {
-                    intakeState = IntakeState.GETBLOCK;
+                    intakeState = IntakeState.GETBALLS;
                     driveState = DriveState.LETGO2;
                     dropTimer.reset();
                 }
@@ -1022,7 +1070,7 @@ public class AutoQual extends OpMode {
                 if (dropTimer.milliseconds() > 400) {
                     //220
 
-                    shotCount++; //specimenCOunt=2
+                    cycleCount++; //specimenCOunt=2
 
                     robot.arm.armBackBasket();
                     //robot.arm.openClaw();
@@ -1219,7 +1267,7 @@ public class AutoQual extends OpMode {
                 if (dropTimer.milliseconds() > 0) {
                     //220
 
-                    shotCount++; //specimenCount=3
+                    cycleCount++; //specimenCount=3
 
                     // if (dropTimer.milliseconds() > 250) {
                     robot.arm.armBackBasket();
@@ -1287,7 +1335,7 @@ public class AutoQual extends OpMode {
                     // driveState = DriveState.IDLE;
                     // driveState = DriveState.GETBLOCK3;
                     intakeTimer.reset();
-                    intakeState = IntakeState.GETBLOCK;
+                    intakeState = IntakeState.GETBALLS;
                     driveState = DriveState.ONWAIT3;
                 }
 
@@ -1468,10 +1516,10 @@ public class AutoQual extends OpMode {
                 if (dropTimer.milliseconds() > 100) {
                     //220
 
-                    shotCount++; //specimenCount=4,5,6
+                    cycleCount++; //specimenCount=4,5,6
 
                     // if (dropTimer.milliseconds() > 250) {
-                    if (shotCount < shots) {
+                    if (cycleCount < cycles) {
                         robot.arm.armBackBasket();
                         //robot.arm.openClaw();
                         dropTimer.reset();
@@ -1486,7 +1534,7 @@ public class AutoQual extends OpMode {
                 if (dropTimer.milliseconds() > 25) {
                     if (isRed) {
                         //TODO: Custom positions
-                        switch (shotCount) {
+                        switch (cycleCount) {
                             case 1:
                                 //     robot.controller.moveToPoint(new Vector2D(60, -48), Math.toRadians(245));//250//240
                                 break;
@@ -1524,7 +1572,7 @@ public class AutoQual extends OpMode {
                                 break;
                         }
                     } else {
-                        switch (shotCount) {
+                        switch (cycleCount) {
                             case 1:
                                 //  robot.controller.moveToPoint(new Vector2D(-60, 48), Math.toRadians(66));//-60,48
                                 break;
@@ -1592,7 +1640,7 @@ public class AutoQual extends OpMode {
                     //robot.lift.liftFullDown();
                     // robot.lift.setLiftPos(0);
 
-                    if (shotCount < (shots)) {
+                    if (cycleCount < (cycles)) {
                         //  driveState = DriveState.GOTOBLOCKS;
                         // driveState = DriveState.IDLE;
 
@@ -1794,55 +1842,24 @@ public class AutoQual extends OpMode {
                     driveState = DriveState.TRAJECTORY_4;
                 }
                 break;
-            case PARK:
-                if (isRed) {
-                    //TODO: Custom positions
 
-                    double[][] points = {
-                        { 23, -7 },
-                        { 55, -12 },
-                        { 60, -36 },
-                        {
-                            robot.controller.getController().getPositionVector().x,
-                            robot.controller.getController().getPositionVector().y,
-                        },
-                    };
-
-                    robot.controller.setCurve(points, Math.toRadians(180), 30);
-                } else {
-                    double[][] points = {
-                        { -23, 7 },
-                        { -55, 12 },
-                        { -60, 36 },
-                        {
-                            robot.controller.getController().getPositionVector().x,
-                            robot.controller.getController().getPositionVector().y,
-                        },
-                    };
-
-                    robot.controller.setCurve(points, Math.toRadians(0), 30);
-                }
-                robot.arm.armBasketPark();
-                driveState = DriveState.IDLE;
-                break;
         }
     }
 
-    public void specimenStart() {
-        robot.lift.setLiftPos(Lift.LiftLevel.SPECIMENHIGH.getValue());
-        robot.lift.isPlacing = true;
-        noMoveCycles = 0;
-        robot.arm.clawWristFront();
-        robot.arm.armPlace();
-        robot.intake.wristTransfer();
+    public void dumpStart() {
+        //TODO:SET VISION TO PROPER APRILTAG TARGET
         //  robot.arm.clawWristBack();
         //  robot.arm.closeClawSpecimen();
         //robot.arm.clawWristFront();
+      /*
         if (isRed) {
             robot.controller.moveToPointRam(new Vector2D(5, -31), Math.toRadians(270)); //28.5//-5//state was 29.5
         } else {
             robot.controller.moveToPointRam(new Vector2D(-5, 31), Math.toRadians(90));
         }
+
+       */
+
     }
 
     public void specimen() {
@@ -1850,7 +1867,7 @@ public class AutoQual extends OpMode {
         switch (driveState) {
             case IDLE:
                 break;
-            case TRAJECTORY_1:
+            case SHOOT_1:
                 robot.controller.getController().setLocalizerMode(CombinedLocalizer.PoseMode.SPARK);
                 if (robot.controller.remainingDistance < 12) {
                     robot.arm.closeStopper();
@@ -1868,7 +1885,7 @@ public class AutoQual extends OpMode {
                 //commented out if ramming
                 robot.lift.liftPlace();
                 //  robot.lift.liftPlaceAuto();
-                driveState = DriveState.LETGO;
+                driveState = DriveState.WAIT_1;
                 /*  switch (path) {
                     case BASKET:
                         driveState = DriveState.DONE_DROP;
@@ -1883,7 +1900,7 @@ public class AutoQual extends OpMode {
                */
 
                 break;
-            case LETGO:
+            case WAIT_1:
                 if (robot.lift.isAtPosition() || dropTimer.milliseconds() > 450) {
                     if (robot.controller.isDriving()) {
                         //||robot.controller.noMoveCycles>30
@@ -1892,7 +1909,7 @@ public class AutoQual extends OpMode {
                     robot.arm.openStopper();
                     robot.arm.openClaw();
                     dropTimer.reset();
-                    driveState = DriveState.ARMUP;
+                    driveState = DriveState.PATH_2;
                 }
 
                 // if (robot.lift.isAtPosition()) {
@@ -1927,11 +1944,11 @@ public class AutoQual extends OpMode {
 
              */
                 break;
-            case ARMUP:
+            case PATH_2:
                 if (dropTimer.milliseconds() > 100) {
                     //robot.arm.armPlaceDone();
                     robot.arm.armPickup();
-                    driveState = DriveState.COMEDOWN;
+                    driveState = DriveState.PATH_3;
                     dropTimer.reset();
                 }
                 /*
@@ -1944,7 +1961,7 @@ public class AutoQual extends OpMode {
 
                */
                 break;
-            case COMEDOWN:
+            case PATH_3:
                 if (dropTimer.milliseconds() > 100) {
                     //150
                     //TODO include test that place is done
@@ -1959,11 +1976,11 @@ public class AutoQual extends OpMode {
 
                     //  driveState = DriveState.DROP;
                     // }
-                    shotCount++;
-                    if (shotCount == 1) {
+                    cycleCount++;
+                    if (cycleCount == 1) {
                         driveState = DriveState.GOTOBLOCKS;
                     } else {
-                        if (shotCount < shots) {
+                        if (cycleCount < cycles) {
                             //robot.arm.armPickup();
 
                             driveState = DriveState.ALIGN;
@@ -2028,12 +2045,12 @@ public class AutoQual extends OpMode {
 
                     //robot.intake.intakeOn();
 
-                    driveState = DriveState.ONWAIT;
+                    driveState = DriveState.INTAKE_2;
                     // driveState = DriveState.IDLE;
                     dropTimer.reset();
                 }
                 break;
-            case ONWAIT:
+            case INTAKE_2:
                 if (intakeState == IntakeState.IDLE) {
                     //    System.out.println("14423 intake is IDLE");
                     driveState = DriveState.TURNBLOCK;
@@ -2051,9 +2068,9 @@ public class AutoQual extends OpMode {
                 robot.intake.extendLevels(10);
 
                 // robot.intake.wristSpit();
-                driveState = DriveState.DROPBLOCK;
+                driveState = DriveState.PATH_1;
                 break;
-            case DROPBLOCK:
+            case PATH_1:
                 if (robot.controller.remainingAngle < Math.abs(Math.toRadians(30))) {
                     //15
                     robot.intake.wristSpit();
@@ -2370,13 +2387,13 @@ public class AutoQual extends OpMode {
                         //   robot.controller.moveToPoint(new Vector2D(2.5 - ((specimenCount - 2) * 2.5), -32), Math.toRadians(270));
                         //} else {
                         robot.controller.moveToPointRam(
-                            new Vector2D(2.5 - ((shotCount - 2) * 2.5), -32),
+                            new Vector2D(2.5 - ((cycleCount - 2) * 2.5), -32),
                             Math.toRadians(270)
                         ); //1.5//28.5//3.5, 5.25,29.5 //state was 29.5
                         // }
                     } else {
                         robot.controller.moveToPointRam(
-                            new Vector2D(-2.5 + ((shotCount - 2) * 2.5), 32),
+                            new Vector2D(-2.5 + ((cycleCount - 2) * 2.5), 32),
                             Math.toRadians(90)
                         ); //-1.5
                     }
@@ -2400,7 +2417,7 @@ public class AutoQual extends OpMode {
 
                     */
                     //noMoveCycles=0;
-                    driveState = DriveState.TRAJECTORY_1;
+                    driveState = DriveState.SHOOT_1;
                 }
                 break;
             case PARK:
@@ -2418,7 +2435,7 @@ public class AutoQual extends OpMode {
         switch (driveState) {
             case IDLE:
                 break;
-            case TRAJECTORY_1:
+            case SHOOT_1:
                 robot.controller.getController().setLocalizerMode(CombinedLocalizer.PoseMode.SPARK);
                 if (robot.controller.remainingDistance < 10) {
                     robot.arm.closeStopper();
@@ -2434,7 +2451,7 @@ public class AutoQual extends OpMode {
                 dropTimer.reset();
                 //   robot.lift.liftPlace();
 
-                driveState = DriveState.LETGO;
+                driveState = DriveState.WAIT_1;
                 /*  switch (path) {
                     case BASKET:
                         driveState = DriveState.DONE_DROP;
@@ -2449,7 +2466,7 @@ public class AutoQual extends OpMode {
                */
 
                 break;
-            case LETGO:
+            case WAIT_1:
                 // if (robot.lift.isAtPosition()) {
                 if (!robot.controller.isDriving() || robot.controller.noMoveCycles > 30) {
                     if (robot.controller.isDriving() || robot.controller.noMoveCycles > 30) {
@@ -2458,18 +2475,18 @@ public class AutoQual extends OpMode {
                     robot.arm.openStopper();
                     robot.arm.openClaw();
                     dropTimer.reset();
-                    driveState = DriveState.ARMUP;
+                    driveState = DriveState.PATH_2;
                 }
                 break;
-            case ARMUP:
+            case PATH_2:
                 if (dropTimer.milliseconds() > 100) {
                     //robot.arm.armPlaceDone();
                     //  robot.arm.armPickup();
-                    driveState = DriveState.COMEDOWN;
+                    driveState = DriveState.PATH_3;
                     dropTimer.reset();
                 }
                 break;
-            case COMEDOWN:
+            case PATH_3:
                 if (dropTimer.milliseconds() > 25) {
                     //150
                     //TODO include test that place is done
@@ -2484,11 +2501,11 @@ public class AutoQual extends OpMode {
 
                     //  driveState = DriveState.DROP;
                     // }
-                    shotCount++;
-                    if (shotCount == 1) {
+                    cycleCount++;
+                    if (cycleCount == 1) {
                         driveState = DriveState.GOTOBLOCKS;
                     } else {
-                        if (shotCount == 2 || shotCount == 3) {
+                        if (cycleCount == 2 || cycleCount == 3) {
                             driveState = DriveState.ALIGN;
                         } else {
                             robot.arm.armPreBasket();
@@ -2549,11 +2566,11 @@ public class AutoQual extends OpMode {
 
                     //robot.intake.intakeOn();
 
-                    driveState = DriveState.ONWAIT;
+                    driveState = DriveState.INTAKE_2;
                     dropTimer.reset();
                 }
                 break;
-            case ONWAIT:
+            case INTAKE_2:
                 if (dropTimer.milliseconds() > 50) {
                     robot.intake.wristPickup();
                     robot.intake.intakeState = Intake.IntakeStates.ONAUTO;
@@ -2577,11 +2594,11 @@ public class AutoQual extends OpMode {
                         robot.intake.extendLevels(4); //4
                         //robot.intake.wristTransfer();
                         //TODO: Code to get blocks with intake }
-                        driveState = DriveState.RETRACT;
+                        driveState = DriveState.PATH_4a;
                     }
                 }
                 break;
-            case RETRACT:
+            case PATH_4a:
                 if (dropTimer.milliseconds() > 200) {
                     driveState = DriveState.TURNBLOCK;
                 }
@@ -2598,9 +2615,9 @@ public class AutoQual extends OpMode {
                 robot.intake.extendFull();
                 robot.intake.wristPickup();
                 // robot.intake.wristSpit();
-                driveState = DriveState.DROPBLOCK;
+                driveState = DriveState.PATH_1;
                 break;
-            case DROPBLOCK:
+            case PATH_1:
                 if (robot.controller.remainingAngle < Math.abs(Math.toRadians(15))) {
                     robot.intake.intakeState = Intake.IntakeStates.SPIT;
                 }
@@ -2866,17 +2883,17 @@ public class AutoQual extends OpMode {
                     robot.intake.wristTransfer();
                     if (isRed) {
                         robot.controller.moveToPoint(
-                            new Vector2D(3.5 + ((shotCount - 2) * 5.25), -29.5),
+                            new Vector2D(3.5 + ((cycleCount - 2) * 5.25), -29.5),
                             Math.toRadians(270)
                         ); //4, 5.25
                     } else {
                         robot.controller.moveToPoint(
-                            new Vector2D(-3.5 - ((shotCount - 2) * 5.25), 29.5),
+                            new Vector2D(-3.5 - ((cycleCount - 2) * 5.25), 29.5),
                             Math.toRadians(90)
                         );
                     }
                     //noMoveCycles=0;
-                    driveState = DriveState.TRAJECTORY_1;
+                    driveState = DriveState.SHOOT_1;
                 }
                 break;
             case PARK:

@@ -1,9 +1,11 @@
 package org.firstinspires.ftc.teamcode.decode.SubSystems.Shooter.Subsystems.YawControl;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+
 
 /**
  * Turret Yaw Control (YCTL)
@@ -24,9 +26,9 @@ public class YawControl {
     }
 
     // === Hardware + Dependencies ===
-    private final Servo yawServo;
+    private  Servo yawServo;
     private final Telemetry telemetry;
-    private final VisionSensor vision;   // External tracking/vision class // 
+    private  VisionSensor vision;   // External tracking/vision class //
 
     // === Configurable constants (FTC Dashboard visible) ===
     public static double SERVO_INIT = 0.5;
@@ -54,9 +56,9 @@ public class YawControl {
         // aimGoal = Robot/Game.getAlliance() == Alliance.RED ?? AimGoal.RED : AimGoal.BLUE;
     }
 
-    private void init(HardwareMap hardwareMap) {
+    public void init(HardwareMap hardwareMap) {
 
-        yawServo = hardwareMap.get(DcMotorEx.class, "YawServo");
+        yawServo = hardwareMap.get(Servo.class, "YawServo");
 
         
 
