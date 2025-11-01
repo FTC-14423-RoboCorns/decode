@@ -66,6 +66,8 @@ public class CombinedLocalizer {
         }
 
          */
+        robot.controller.getController().updateSparkPose();
+        sparkVector = robot.controller.getController().getSparkVector();
         if (poseMode == PoseMode.APRILTAG) {
             robot.readLimelight();
             aprilTagVector = new Vector2D(
@@ -74,10 +76,13 @@ public class CombinedLocalizer {
             );
             //add code to read apriltag
         }
-        robot.controller.getController().updateSparkPose();
-        sparkVector = robot.controller.getController().getSparkVector();
+
+
+        // Turn off ultrasonic this year
+        /*
         ultrasonicVector = new Vector2D(0, 0);
         double diff;
+
         if (poseMode == PoseMode.ULTRASONIC) {
             if (robot.ultrasonicLocalizer.getBlue()) {
                 diff = Math.toRadians(270) - robot.getOrientation();
@@ -103,7 +108,8 @@ public class CombinedLocalizer {
             } else {
                 currentVector = sparkVector;
             }
-        } else if (poseMode == PoseMode.BASKETULTRA) {
+        }
+        else if (poseMode == PoseMode.BASKETULTRA) {
             if (robot.ultrasonicLocalizer.getBlue()) {
                 diff = Math.toRadians(90) - robot.getOrientation();
             } else {
@@ -148,7 +154,9 @@ public class CombinedLocalizer {
                 currentVector = ultrasonicVector;
                 //currentVector=sparkVector;
             }
-        } else {
+        } */
+        //this else statement now goes up with the if APRILTAG. SparkVector is the default
+        else {
             currentVector = sparkVector;
         }
     }

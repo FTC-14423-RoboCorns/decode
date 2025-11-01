@@ -51,7 +51,7 @@ public class Shooter {
         isShooterOn = false;
         this.robot=thisRobot;
         this.telemetry = telem;
-        if (Data.getBlue()) {
+        if (Data.getRed()) {
 
             isBlue = 1;
 

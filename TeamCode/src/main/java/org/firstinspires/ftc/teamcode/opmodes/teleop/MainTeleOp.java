@@ -50,7 +50,7 @@ public class MainTeleOp extends OpMode {
     private double multiplier = 1;
     private boolean ledOn = true;
     double prox = 30;
-    private int isBlue = 1;
+    private int isRed = 1;
 
     private double deadx, deady, deadrot;
     private double deadBand = .2;
@@ -163,12 +163,12 @@ public class MainTeleOp extends OpMode {
         // robot.frontcam.setPixelPipeline();
         buttonTable = setupCheckButtons();
         //switch to pipeline for proper shooting tags
-        if (Data.getBlue()) {
+        if (Data.getRed()) {
             robot.limelight.pipelineSwitch(1);
-            isBlue = 1;
+            isRed = 1;
         } else {
             robot.limelight.pipelineSwitch(0);
-            isBlue = -1;
+            isRed = -1;
         }
         ledState = LEDStates.CHANGESIDE;
         ledstate();
@@ -195,7 +195,7 @@ public class MainTeleOp extends OpMode {
             telemetry.addData("stored heading",Math.toDegrees(Data.getHeading()));
         telemetry.update();
 */
-        telemetry.addData("Blue", Data.getBlue());
+        telemetry.addData("Red", Data.getRed());
         telemetry.addData("stored pose", Data.getPose());
         telemetry.addData("stored heading", Math.toDegrees(Data.getHeading()));
         telemetry.update();
@@ -262,16 +262,16 @@ public class MainTeleOp extends OpMode {
         if (currentGamepad1.right_stick_button && !buttonTable.get("g1rsb")) {
             buttonTable.put("g1rsb", true);
             robot.resetYawManual();
-            robot.ultrasonicLocalizer.setBlue(true);
-            isBlue = 1;
+        //    robot.ultrasonicLocalizer.setBlue(true);
+            isRed = 1;
             ledState = LEDStates.CHANGESIDE;
         }
         //reset IMU from red side
         if (currentGamepad1.left_stick_button && !buttonTable.get("g1lsb")) {
             buttonTable.put("g1lsb", true);
             robot.resetYawManual();
-            robot.ultrasonicLocalizer.setBlue(false);
-            isBlue = -1;
+          //  robot.ultrasonicLocalizer.setBlue(false);
+            isRed = -1;
             ledState = LEDStates.CHANGESIDE;
         }
 
@@ -375,7 +375,7 @@ public class MainTeleOp extends OpMode {
         // System.out.println("14423 deady " + deady);
 
         //set our initial vector based on joystick and speed multiplier, correcting for red/blue
-        Vector2D gamepadVector = new Vector2D(-deadx * isBlue * multiplier, -deady * isBlue * multiplier);
+        Vector2D gamepadVector = new Vector2D(-deadx * isRed * multiplier, -deady * isRed * multiplier);
         Vector2D linearVelocityVector;
         //turn the initial vector based on our current orientation for field centric
         if (fieldCentric) {
@@ -632,7 +632,7 @@ public class MainTeleOp extends OpMode {
             case STARTDRIVING: //TODO: Add for RED
                 robot.controller.getController().setLocalizerMode(CombinedLocalizer.PoseMode.FORCEULTRA);
 
-                if (isBlue == 1) {
+                if (isRed == 1) {
                     //  if (Math.abs(robot.getOrientation())-Math.toRadians(270)>5){
                     robot.controller.turnOnly(Math.toRadians(270));
                     //}
@@ -650,7 +650,7 @@ public class MainTeleOp extends OpMode {
                 break;
             case ALIGN:
                 if (!robot.controller.isDriving()) {
-                    if (isBlue == 1) {
+                    if (isRed == 1) {
                         //    double[][] points = {{-35.25, -61}, {-34, -47.5}, {-8, -47.5}, {robot.controller.getController().getPositionVector().x, robot.controller.getController().getPositionVector().y}};
                         //   robot.controller.setCurvePrecise(points, Math.toRadians(270), 30);
                         robot.controller.moveToPointPrecise(new Vector2D(-36.25, -60.25), Math.toRadians(270)); //-34.5,61
@@ -679,7 +679,7 @@ public class MainTeleOp extends OpMode {
                 break;
             case BASKETDRIVING: //TODO: Add for RED
                 robot.controller.getController().setLocalizerMode(CombinedLocalizer.PoseMode.BASKETULTRA);
-                if (isBlue == 1) {
+                if (isRed == 1) {
                     robot.controller.turnOnly(Math.toRadians(45));
                 } else {
                     robot.controller.turnOnly(Math.toRadians(225));
@@ -693,7 +693,7 @@ public class MainTeleOp extends OpMode {
                 break;
             case BASKETALIGN:
                 if (!robot.controller.isDriving()) {
-                    if (isBlue == 1) {
+                    if (isRed == 1) {
                         robot.controller.moveToPointPrecise(new Vector2D(58, -56), Math.toRadians(45)); //-34.5
                     } else {
                         robot.controller.moveToPointPrecise(new Vector2D(-58, 56), Math.toRadians(225)); //34.5//62.75
@@ -1121,12 +1121,12 @@ public class MainTeleOp extends OpMode {
                         robot.ledStrip.setColors(robot.ledColor);
                         break;
                     case CHANGETARGET:
-                        robot.ledTarget(isBlue == 1);
+                        robot.ledTarget(isRed == 1);
                         robot.ledEmpty();
                         robot.ledStrip.setColors(robot.ledColor);
                         break;
                     case CHANGESIDE:
-                        robot.ledSide(isBlue == 1);
+                        robot.ledSide(isRed == 1);
                         // robot.ledTarget(isBlue==1);
                         robot.ledEmpty();
                         robot.ledStrip.setColors(robot.ledColor);
@@ -1217,7 +1217,7 @@ public class MainTeleOp extends OpMode {
         //cycle through specimen and baskets
         if (currentGamepad2.left_bumper && !buttonTable.get("g2lb")) {
             buttonTable.put("g2lb", true);
-            robot.lift.liftLevel = robot.lift.liftLevel.previous();
+          //  robot.lift.liftLevel = robot.lift.liftLevel.previous();
             ledState = LEDStates.CHANGETARGET;
         }
         /* if (robot.lift.targetSpecimen()) {
@@ -1239,7 +1239,7 @@ public class MainTeleOp extends OpMode {
             ledState = LEDStates.CHANGETARGET;
             //        }
             if (robot.lift.targetSpecimen()) {
-                if (isBlue == 1) {
+                if (isRed == 1) {
                     robot.limelight.pipelineSwitch(1);
                 } else {
                     robot.limelight.pipelineSwitch(0);

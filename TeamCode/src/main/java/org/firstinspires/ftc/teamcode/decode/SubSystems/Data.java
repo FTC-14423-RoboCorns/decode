@@ -5,18 +5,18 @@ import org.firstinspires.ftc.teamcode.util.Vector2D;
 public class Data {
 
     //lastHeading, accessed by get and setHeading. Starts at 0.
-    private static boolean blue = true;
+    private static boolean red = true;
     private static Vector2D thePose = new Vector2D(0, 0);
     private static double heading;
 
     //Setter method
-    public static void setBlue(boolean blueside) {
-        blue = blueside;
+    public static void setRed(boolean redside) {
+        red = redside;
     }
 
     //Getter method
-    public static boolean getBlue() {
-        return blue;
+    public static boolean getRed() {
+        return red;
     }
 
     public static void setPose(Vector2D pose) {

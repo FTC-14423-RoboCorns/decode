@@ -20,7 +20,7 @@ import org.firstinspires.ftc.teamcode.decode.SubSystems.Intake;
 import org.firstinspires.ftc.teamcode.decode.SubSystems.Lift;
 import org.firstinspires.ftc.teamcode.decode.SubSystems.OurQwiicLEDStick;
 import org.firstinspires.ftc.teamcode.decode.SubSystems.SparkfunOdo;
-import org.firstinspires.ftc.teamcode.decode.SubSystems.UltrasonicLocalizer;
+//import org.firstinspires.ftc.teamcode.decode.SubSystems.UltrasonicLocalizer;
 
 public class DecodeRobot {
     /**
@@ -40,7 +40,7 @@ public class DecodeRobot {
     public Intake intake = new Intake();
     public DistanceSensor prox;
     public SparkfunOdo sparkODO = new SparkfunOdo();
-    public UltrasonicLocalizer ultrasonicLocalizer;
+    //public UltrasonicLocalizer ultrasonicLocalizer; no ultrasonic localizer this year
     public List<LynxModule> allHubs;
     public VoltageSensor battery;
     public DatalogWrapper datalogWrapper;
@@ -149,7 +149,7 @@ public class DecodeRobot {
         limelight.start();
         ledinit(hardwareMap);
         sparkODO.init(hardwareMap);
-        ultrasonicLocalizer = UltrasonicLocalizer.makeUltrasonicTrackingLocalizer(hardwareMap, Data.getBlue());
+      //  ultrasonicLocalizer = UltrasonicLocalizer.makeUltrasonicTrackingLocalizer(hardwareMap, Data.getBlue());
 
         // Systems
         shooter = new ShooterController(telem, this);

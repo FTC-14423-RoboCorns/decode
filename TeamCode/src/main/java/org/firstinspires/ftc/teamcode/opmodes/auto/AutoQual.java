@@ -4,7 +4,6 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -23,7 +22,7 @@ Primary auto opmode
 public class AutoQual extends OpMode {
 
     public DecodeRobot robot = new DecodeRobot(0, 0, 0);
-    public boolean isBlue = true;
+    public boolean isRed = true;
     private boolean center = true;
     public int autoChoice = 1;
     private double angle = 0;
@@ -292,8 +291,8 @@ public class AutoQual extends OpMode {
     //private SwerveHeading[][][] driveArray = new SwerveHeading[2][2][6];
     //private SwerveHeading[][][] boardArray= new SwerveHeading[2][2][3];
     //private SwerveHeading[][][] boardArray2= new SwerveHeading[2][2][3];
-    private int blueSide = 1;
-    private int redSide = 0;
+    private int blueSide = 0;
+    private int redSide = 1;
     private int shots = 5; //set shots to a proper number
     private int color = blueSide;
 
@@ -377,12 +376,12 @@ public class AutoQual extends OpMode {
         }
         //init the swerve, choose a side
         if (gamepad1.x) {
-            isBlue = true;
+            isRed = true;
 
-            color = blueSide;
-        } else if (gamepad1.b) {
-            isBlue = false;
             color = redSide;
+        } else if (gamepad1.b) {
+            isRed = false;
+            color = blueSide;
         }
 
         //set start position here
@@ -393,11 +392,11 @@ public class AutoQual extends OpMode {
         }
 
         //record side for teleop
-        Data.setBlue(isBlue);
+        Data.setRed(isRed);
         // if (gamepad1.dpad_right && !isDPRDown)
 
         telemetry.addData("Start Pos ay Center (true) Side (false)", center); //change to match start pos options
-        telemetry.addData("isBlue xb Blue (true) Red (false)", isBlue);
+        telemetry.addData("isRed xb Red (true) Blue (false)", isRed);
         //   telemetry.addData("park trigger", parkSide);
         telemetry.addData("Path choice dpad right", path);
         telemetry.addData("Shot Count dpad up/down", shots);
@@ -409,7 +408,7 @@ public class AutoQual extends OpMode {
 
         //set our starting positions by path, starting pos, and color
         if (path == Path.SPECIMEN) {
-            if (isBlue) {
+            if (isRed) {
                 //TODO: Set start poses
                 robot.controller.getController().initzeroPower(Math.toRadians(0));
                 if (center) {
@@ -426,7 +425,7 @@ public class AutoQual extends OpMode {
                 }
             }
         } else if (path == Path.BASKET) {
-            if (isBlue) {
+            if (isRed) {
                 //TODO: Set start poses
                 robot.controller.getController().initzeroPower(Math.toRadians(0));
                 robot.setPose(38.75, -64, Math.toRadians(180));
@@ -454,8 +453,8 @@ public class AutoQual extends OpMode {
     }
 
     public void start() {
-        Data.setBlue(isBlue);
-        robot.ultrasonicLocalizer.setBlue(isBlue); //we likely won't use this this year
+        Data.setRed(isRed);
+      //  robot.ultrasonicLocalizer.setBlue(isRed); //we likely won't use this this year
         robot.controller.getController().setIsAuto(true);
         for (LynxModule module : robot.allHubs) {
             module.clearBulkCache();
@@ -788,7 +787,7 @@ public class AutoQual extends OpMode {
         robot.arm.armPreBasket();
         robot.intake.wristTransfer();
 
-        if (isBlue) {
+        if (isRed) {
             robot.controller.moveToPoint(new Vector2D(58.5, -52.5), Math.toRadians(248)); //-53 ,248
         } else {
             robot.controller.moveToPoint(new Vector2D(-58.5, 52.5), Math.toRadians(68));
@@ -870,7 +869,7 @@ public class AutoQual extends OpMode {
                 }
                 break;
             case RETRACT:
-                if (isBlue) {
+                if (isRed) {
                     robot.controller.moveToPoint(new Vector2D(62.5, -53.5), Math.toRadians(263)); //61.5,-55//265
                 } else {
                     robot.controller.moveToPoint(new Vector2D(-62.5, 53.5), Math.toRadians(85));
@@ -1233,7 +1232,7 @@ public class AutoQual extends OpMode {
                 break;
             case MOVEDROP3:
                 if (dropTimer.milliseconds() > 25) {
-                    if (isBlue) {
+                    if (isRed) {
                         robot.controller.moveToPoint(new Vector2D(56, -43), Math.toRadians(305));
                     } else {
                         // robot.controller.moveToPoint(new Vector2D(-57, 41), Math.toRadians(127));
@@ -1315,7 +1314,7 @@ public class AutoQual extends OpMode {
                 */
                 break;
             case RETRACT3:
-                if (isBlue) {
+                if (isRed) {
                     robot.controller.moveToPoint(new Vector2D(56, -56), Math.toRadians(225)); //(57,-57)
                 } else {
                     robot.controller.moveToPoint(new Vector2D(-56, 56), Math.toRadians(45));
@@ -1485,7 +1484,7 @@ public class AutoQual extends OpMode {
                 break;
             case MOVEDROP4:
                 if (dropTimer.milliseconds() > 25) {
-                    if (isBlue) {
+                    if (isRed) {
                         //TODO: Custom positions
                         switch (shotCount) {
                             case 1:
@@ -1660,7 +1659,7 @@ public class AutoQual extends OpMode {
                 //Start moving while transferring
                 if (dropTimer.milliseconds() > 400) {
                     //robot.intake.extendTransfer();
-                    if (isBlue) {
+                    if (isRed) {
                         //500 //59,-56, 60,-36
                         double[][] points = {
                             { 57, -57 },
@@ -1796,7 +1795,7 @@ public class AutoQual extends OpMode {
                 }
                 break;
             case PARK:
-                if (isBlue) {
+                if (isRed) {
                     //TODO: Custom positions
 
                     double[][] points = {
@@ -1839,7 +1838,7 @@ public class AutoQual extends OpMode {
         //  robot.arm.clawWristBack();
         //  robot.arm.closeClawSpecimen();
         //robot.arm.clawWristFront();
-        if (isBlue) {
+        if (isRed) {
             robot.controller.moveToPointRam(new Vector2D(5, -31), Math.toRadians(270)); //28.5//-5//state was 29.5
         } else {
             robot.controller.moveToPointRam(new Vector2D(-5, 31), Math.toRadians(90));
@@ -1981,7 +1980,7 @@ public class AutoQual extends OpMode {
                 //  robot.arm.armTransfer();
 
                 //ANGLE 235 .52 //217 max.436
-                if (isBlue) {
+                if (isRed) {
                     double[][] points = {
                         { -50, -44 },
                         { -34, -47 },
@@ -2043,7 +2042,7 @@ public class AutoQual extends OpMode {
             case TURNBLOCK:
                 // System.out.println("14423 in TURNBLOCK");
                 //  robot.controller.moveToPoint(new Vector2D(robot.controller.getController().getPositionVector().x,robot.controller.getController().getPositionVector().y), Math.toRadians(135));
-                if (isBlue) {
+                if (isRed) {
                     robot.controller.turnOnlyFast(Math.toRadians(130));
                 } else {
                     robot.controller.turnOnlyFast(Math.toRadians(310));
@@ -2091,7 +2090,7 @@ public class AutoQual extends OpMode {
                     //20
 
                     // robot.intake.intakeState= Intake.IntakeStates.ONAUTO;
-                    if (isBlue) {
+                    if (isRed) {
                         robot.controller.turnOnly(Math.toRadians(232)); //200//204//180+24
                     } else {
                         robot.controller.turnOnly(Math.toRadians(52)); //180-24
@@ -2136,7 +2135,7 @@ public class AutoQual extends OpMode {
                 break;
             case TURNBLOCK2:
                 //  robot.controller.moveToPoint(new Vector2D(robot.controller.getController().getPositionVector().x,robot.controller.getController().getPositionVector().y), Math.toRadians(135));
-                if (isBlue) {
+                if (isRed) {
                     robot.controller.turnOnlyFast(Math.toRadians(130));
                 } else {
                     robot.controller.turnOnlyFast(Math.toRadians(310));
@@ -2183,7 +2182,7 @@ public class AutoQual extends OpMode {
             case TURN3:
                 if (dropTimer.milliseconds() > 0) {
                     //20
-                    if (isBlue) {
+                    if (isRed) {
                         robot.controller.turnOnly(Math.toRadians(210)); //216
                     } else {
                         robot.controller.turnOnly(Math.toRadians(30)); //180-24
@@ -2252,7 +2251,7 @@ public class AutoQual extends OpMode {
                 //     robot.intake.extendLevels(6);
                 if (dropTimer.milliseconds() > 10) {
                     //  robot.controller.moveToPoint(new Vector2D(robot.controller.getController().getPositionVector().x,robot.controller.getController().getPositionVector().y), Math.toRadians(135));
-                    if (isBlue) {
+                    if (isRed) {
                         robot.controller.turnOnlyFast(Math.toRadians(130));
                     } else {
                         robot.controller.turnOnlyFast(Math.toRadians(310));
@@ -2291,7 +2290,7 @@ public class AutoQual extends OpMode {
                     robot.intake.wristHorizontal();
                     robot.intake.extendTransfer();
 
-                    if (isBlue) {
+                    if (isRed) {
                         robot.controller.turnOnlyFast(Math.toRadians(270)); //testing - may want sloser
                     } else {
                         robot.controller.turnOnlyFast(Math.toRadians(90));
@@ -2322,7 +2321,7 @@ public class AutoQual extends OpMode {
 
                 //  if (dropTimer.milliseconds()>100) {
 
-                if (isBlue) {
+                if (isRed) {
                     //    if (specimenCount==1) {
                     robot.controller.moveToPointPrecise(new Vector2D(-35.25, -60.75), Math.toRadians(270)); //-61.75//-62
                     //  } else {
@@ -2342,7 +2341,7 @@ public class AutoQual extends OpMode {
                     Math.abs(robot.controller.getController().getSparkVector().y) > 48 &&
                     Math.abs(robot.controller.getController().getSparkVector().x) > 24
                 ) {
-                    robot.controller.getController().setLocalizerMode(CombinedLocalizer.PoseMode.ULTRASONIC);
+                  //  robot.controller.getController().setLocalizerMode(CombinedLocalizer.PoseMode.ULTRASONIC);
                 } else {
                     robot.controller.getController().setLocalizerMode(CombinedLocalizer.PoseMode.SPARK);
                 }
@@ -2362,7 +2361,7 @@ public class AutoQual extends OpMode {
                     robot.controller.getController().setLocalizerMode(CombinedLocalizer.PoseMode.SPARK);
                     robot.lift.setLiftPos(Lift.LiftLevel.SPECIMENHIGH.getValue());
                     robot.lift.isPlacing = true;
-                    if (isBlue) {
+                    if (isRed) {
                         //     double[][] points = {{2.5-((specimenCount-2)*2.5),-32}, {2.5-((specimenCount-2)*2.5), -42}, {-3.3, -45}, {robot.controller.getController().getPositionVector().x, robot.controller.getController().getPositionVector().y}};
                         //    robot.controller.setCurveRam(points, Math.toRadians(270), 30);
                         //    robot.controller.moveToPointRam(new Vector2D(-2.5+((specimenCount-2)*2.5),-31), Math.toRadians(270));//1.5//28.5//3.5, 5.25,29.5
@@ -2405,7 +2404,7 @@ public class AutoQual extends OpMode {
                 }
                 break;
             case PARK:
-                if (isBlue) {
+                if (isRed) {
                     robot.controller.moveToPointPrecise(new Vector2D(-36.25, -61.75), Math.toRadians(270));
                 } else {
                     robot.controller.moveToPointPrecise(new Vector2D(36.25, 61.75), Math.toRadians(90));
@@ -2504,7 +2503,7 @@ public class AutoQual extends OpMode {
                 //  robot.arm.armTransfer();
 
                 //ANGLE
-                if (isBlue) {
+                if (isRed) {
                     double[][] points = {
                         { -39, -34 },
                         { -34, -47 },
@@ -2590,7 +2589,7 @@ public class AutoQual extends OpMode {
                 break;
             case TURNBLOCK:
                 //  robot.controller.moveToPoint(new Vector2D(robot.controller.getController().getPositionVector().x,robot.controller.getController().getPositionVector().y), Math.toRadians(135));
-                if (isBlue) {
+                if (isRed) {
                     robot.controller.turnOnly(Math.toRadians(130));
                 } else {
                     robot.controller.turnOnly(Math.toRadians(310));
@@ -2629,7 +2628,7 @@ public class AutoQual extends OpMode {
                     //200
 
                     // robot.intake.intakeState= Intake.IntakeStates.ONAUTO;
-                    if (isBlue) {
+                    if (isRed) {
                         robot.controller.turnOnly(Math.toRadians(198)); //200//204//180+24
                     } else {
                         robot.controller.turnOnly(Math.toRadians(18)); //180-24
@@ -2680,7 +2679,7 @@ public class AutoQual extends OpMode {
                 break;
             case TURNBLOCK2:
                 //  robot.controller.moveToPoint(new Vector2D(robot.controller.getController().getPositionVector().x,robot.controller.getController().getPositionVector().y), Math.toRadians(135));
-                if (isBlue) {
+                if (isRed) {
                     robot.controller.turnOnly(Math.toRadians(130));
                 } else {
                     robot.controller.turnOnly(Math.toRadians(310));
@@ -2707,7 +2706,7 @@ public class AutoQual extends OpMode {
             case TURN3:
                 if (dropTimer.milliseconds() > 350) {
                     robot.intake.intakeState = Intake.IntakeStates.OFF;
-                    if (isBlue) {
+                    if (isRed) {
                         robot.controller.moveToPoint(new Vector2D(-50, -39), Math.toRadians(212));
                     } else {
                         robot.controller.moveToPoint(new Vector2D(50, 39), Math.toRadians(32));
@@ -2759,7 +2758,7 @@ public class AutoQual extends OpMode {
             case TURNBLOCK3:
                 if (dropTimer.milliseconds() > 250) {
                     //  robot.controller.moveToPoint(new Vector2D(robot.controller.getController().getPositionVector().x,robot.controller.getController().getPositionVector().y), Math.toRadians(135));
-                    if (isBlue) {
+                    if (isRed) {
                         robot.controller.turnOnly(Math.toRadians(130));
                     } else {
                         robot.controller.turnOnly(Math.toRadians(310));
@@ -2794,7 +2793,7 @@ public class AutoQual extends OpMode {
                     robot.intake.intakeState = Intake.IntakeStates.OFF;
                     robot.intake.extendTransfer();
                     robot.intake.wristTransfer();
-                    if (isBlue) {
+                    if (isRed) {
                         robot.controller.turnOnly(Math.toRadians(270));
                     } else {
                         robot.controller.turnOnly(Math.toRadians(90));
@@ -2824,7 +2823,7 @@ public class AutoQual extends OpMode {
 
                 //  if (dropTimer.milliseconds()>100) {
 
-                if (isBlue) {
+                if (isRed) {
                     robot.controller.moveToPointPrecise(new Vector2D(-35.25, -62), Math.toRadians(270)); //-61.75
                 } else {
                     robot.controller.moveToPointPrecise(new Vector2D(35.25, 62), Math.toRadians(90));
@@ -2838,7 +2837,7 @@ public class AutoQual extends OpMode {
                     Math.abs(robot.controller.getController().getSparkVector().y) > 48 &&
                     Math.abs(robot.controller.getController().getSparkVector().x) > 24
                 ) {
-                    robot.controller.getController().setLocalizerMode(CombinedLocalizer.PoseMode.ULTRASONIC);
+                 //   robot.controller.getController().setLocalizerMode(CombinedLocalizer.PoseMode.ULTRASONIC);
                 } else {
                     robot.controller.getController().setLocalizerMode(CombinedLocalizer.PoseMode.SPARK);
                 }
@@ -2865,7 +2864,7 @@ public class AutoQual extends OpMode {
                     //400
                     robot.arm.armPlace();
                     robot.intake.wristTransfer();
-                    if (isBlue) {
+                    if (isRed) {
                         robot.controller.moveToPoint(
                             new Vector2D(3.5 + ((shotCount - 2) * 5.25), -29.5),
                             Math.toRadians(270)
@@ -2881,7 +2880,7 @@ public class AutoQual extends OpMode {
                 }
                 break;
             case PARK:
-                if (isBlue) {
+                if (isRed) {
                     robot.controller.moveToPointPrecise(new Vector2D(-35.25, -61.75), Math.toRadians(270));
                 } else {
                     robot.controller.moveToPointPrecise(new Vector2D(35.25, 61.75), Math.toRadians(90));
@@ -3085,13 +3084,13 @@ public class AutoQual extends OpMode {
                 break;
         }
     }
-
+/*
     public void updatePoseUltrasonic() {
         robot.ultrasonicLocalizer.update(Math.toRadians(270) - robot.getOrientation());
         //need to negate x because our OTOS flips x and so we flip it somewhere else in the code
         robot.setVector(robot.ultrasonicLocalizer.getPoseEstimate().x, robot.ultrasonicLocalizer.getPoseEstimate().y);
     }
-
+*/
     private double calculateExtension() {
         if (robot.limelightResult != null) {
             double distance = 12.2 / Math.tan(Math.toRadians(17.8 + robot.limelightResult.getTy())) - 7.5; //6.5
